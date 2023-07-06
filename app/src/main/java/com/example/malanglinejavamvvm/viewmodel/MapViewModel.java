@@ -6,11 +6,9 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
 import android.location.Location;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Pair;
 
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -19,7 +17,6 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.malanglinejavamvvm.R;
-import com.example.malanglinejavamvvm.model.GraphTransport;
 import com.example.malanglinejavamvvm.model.Interchange;
 import com.example.malanglinejavamvvm.model.Line;
 import com.example.malanglinejavamvvm.model.LocationModel;
@@ -31,19 +28,11 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -53,26 +42,20 @@ public class MapViewModel extends ViewModel {
     private FusedLocationProviderClient fusedLocationProviderClient;
     private LocationRequest locationRequest;
     private LocationCallback locationCallback;
-
     public LiveData<LocationModel> getLocation() {
         return location;
     }
-
-
     public void setLocation(LocationModel LocationModel) {
         location.setValue(LocationModel);
     }
-
     private GoogleMap googleMap;
     private final List<PolylineOptions> polylineOptionsList = new ArrayList<>();
-
-
-    // You need to initialize the graphTransport instance in the constructor or using some other method
-
-
     private MutableLiveData<List<Line>> lineList = new MutableLiveData<>();
-
+    public LiveData<List<Line>> getLines() {
+        return lineList;
+    }
     private Handler handler;
+
 
     public void startLocationUpdates(final Context context) {
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context);
@@ -110,9 +93,7 @@ public class MapViewModel extends ViewModel {
         }
     }
 
-    public LiveData<List<Line>> getLines() {
-        return lineList;
-    }
+
 
     public void AmbilPoints(Context context, GoogleMap googleMap) {
         handler = new Handler();
