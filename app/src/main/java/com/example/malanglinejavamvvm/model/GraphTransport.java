@@ -171,15 +171,4 @@ public class GraphTransport {
         return pointSets;
     }
 
-//    public List<Pair<PointTransport, PointTransport>> getAllEdges() {
-//        List<Pair<PointTransport, PointTransport>> edges = new ArrayList<>();
-//
-//        for (PointTransport point : pointTransports) {
-//            for (PointTransport destination : point.getAdjacentTransportPoints().keySet()) {
-//                edges.add(new Pair<>(point, destination));
-//            }
-//        }
-//
-//        return edges;
-//    }
 }

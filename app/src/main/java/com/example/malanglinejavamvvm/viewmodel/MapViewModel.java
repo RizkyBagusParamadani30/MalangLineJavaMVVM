@@ -58,7 +58,6 @@ public class MapViewModel extends ViewModel {
         return location;
     }
 
-    public MutableLiveData<List<Line>> liness = new MutableLiveData<>();
 
     public void setLocation(LocationModel LocationModel) {
         location.setValue(LocationModel);
@@ -70,15 +69,10 @@ public class MapViewModel extends ViewModel {
 
     // You need to initialize the graphTransport instance in the constructor or using some other method
 
-    private MutableLiveData<List<PointTransport>> pointTransportList = new MutableLiveData<>();
+
     private MutableLiveData<List<Line>> lineList = new MutableLiveData<>();
-    private MutableLiveData<List<Interchange>> interchangeList = new MutableLiveData<>();
+
     private Handler handler;
-
-
-
-
-
 
     public void startLocationUpdates(final Context context) {
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context);
@@ -116,61 +110,9 @@ public class MapViewModel extends ViewModel {
         }
     }
 
-//    public void setAndPaseline (String jsonData){
-//        List<Line> linesList = new Gson().fromJson(jsonData, new TypeToken<List<Line>>() {}.getType());
-//        liness.setValue(linesList);
-//    }
-
     public LiveData<List<Line>> getLines() {
         return lineList;
     }
-
-//    public void AmbilPoints(Context context) {
-//        try {
-//            InputStream masukanStream = context.getResources().openRawResource(R.raw.managedpoints);
-//            int size = masukanStream.available();
-//            byte[] ukuran = new byte[size];
-//            masukanStream.read(ukuran);
-//            masukanStream.close();
-//            String jsonData = new String(ukuran, StandardCharsets.UTF_8);
-//
-//            JSONObject jsonObject = new JSONObject(jsonData);
-//            JSONArray linesArray = jsonObject.getJSONArray("lines");
-//
-//            for (int i = 0; i < linesArray.length(); i++) {
-//                JSONObject lineObject = linesArray.getJSONObject(i);
-//                Integer id = lineObject.getInt("idline");
-//                String name = lineObject.getString("name");
-//                String direction = lineObject.getString("direction");
-//                String colorString = lineObject.getString("color");
-//                int color = Color.parseColor(colorString);
-//
-//                PolylineOptions polylineOptions = new PolylineOptions(); // Create a new PolylineOptions object for each line
-//                polylineOptions.color(color);
-//                JSONArray pathArray = lineObject.getJSONArray("path");
-//                for (int j = 0; j < pathArray.length(); j++) {
-//                    JSONObject point = pathArray.getJSONObject(j);
-//                    double lat = point.getDouble("lat");
-//                    double lng = point.getDouble("lng");
-//                    polylineOptions.add(new LatLng(lat, lng));
-//                }
-//
-//                polylineOptionsList.add(polylineOptions); // Add the polylineOptions to the list
-//            }
-//
-//        } catch (IOException | JSONException e) {
-//            e.printStackTrace();
-//        }
-//    }
-//public void bindPolylineToMap(GoogleMap googleMap) {
-//    this.googleMap = googleMap;
-//
-//    // Add each PolylineOptions object to the map
-//    for (PolylineOptions polylineOptions : polylineOptionsList) {
-//        googleMap.addPolyline(polylineOptions);
-//    }
-//}
-
 
     public void AmbilPoints(Context context, GoogleMap googleMap) {
         handler = new Handler();
@@ -182,7 +124,6 @@ public class MapViewModel extends ViewModel {
                     public void run() {
                         // Set the list of Line and Interchange objects in the MutableLiveData
                         lineList.setValue(lines);
-                        interchangeList.setValue(interchanges);
                     }
                 });
             }
@@ -216,4 +157,5 @@ public class MapViewModel extends ViewModel {
             }
         }
     }
+
 }
