@@ -54,6 +54,10 @@ public class MapViewModel extends ViewModel {
     public LiveData<List<Line>> getLines() {
         return lineList;
     }
+    private MutableLiveData<List<Interchange>> interchangelist = new MutableLiveData<>();
+    public LiveData<List<Interchange>> getInterchanges() {
+        return interchangelist;
+    }
     private Handler handler;
 
 
@@ -103,12 +107,13 @@ public class MapViewModel extends ViewModel {
                 handler.post(new Runnable() {
                     @Override
                     public void run() {
-                        // Set the list of Line and Interchange objects in the MutableLiveData
+                        // Set the list of Line
                         lineList.setValue(lines);
+                        // Set the list of Interchange
+                        interchangelist.setValue(interchanges); // assuming you have a LiveData object for interchanges
                     }
                 });
             }
-
             @Override
             public void onPointsRequestError(String error) {
                 // Handle the error case
