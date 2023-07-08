@@ -64,8 +64,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         });
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used
-       SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
-       mapFragment.getMapAsync(this);
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+        mapFragment.getMapAsync(this);
 
 
     }
@@ -112,20 +112,12 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         // Obtain the lines and interchanges from the ViewModel
         List<Line> lines = viewModel.getLines().getValue();
         List<Interchange> interchanges = viewModel.getInterchanges().getValue();
-
         if (lines != null && interchanges != null) {
             // Convert the lists to ArrayLists
             ArrayList<Line> linesArrayList = new ArrayList<>(lines);
             ArrayList<Interchange> interchangesArrayList = new ArrayList<>(interchanges);
-
             // Create a GraphTask to build the graph in the background
-            GraphTask graphTask = new GraphTask(linesArrayList, interchangesArrayList, new GraphTask.IGraphTask() {
-                @Override
-                public void onGraphGenerated(Set<PointTransport> points) {
-                    // Graph generation completed, do any further processing with the graph
-                    handleGraph(points);
-                }
-            });
+            GraphTask graphTask = new GraphTask(linesArrayList, interchangesArrayList, this::handleGraph);
             graphTask.execute();
         }
     }
@@ -195,8 +187,5 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         // Stop location updates
         viewModel.stopLocationUpdates();
     }
-
-
-
 }
 

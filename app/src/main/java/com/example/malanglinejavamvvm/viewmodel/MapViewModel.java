@@ -17,6 +17,8 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.malanglinejavamvvm.R;
+import com.example.malanglinejavamvvm.model.GraphTask;
+import com.example.malanglinejavamvvm.model.GraphTransport;
 import com.example.malanglinejavamvvm.model.Interchange;
 import com.example.malanglinejavamvvm.model.Line;
 import com.example.malanglinejavamvvm.model.LocationModel;
@@ -36,6 +38,7 @@ import com.google.android.gms.maps.model.PolylineOptions;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 public class MapViewModel extends ViewModel {
     private MutableLiveData<LocationModel> location = new MutableLiveData<>();
@@ -57,6 +60,11 @@ public class MapViewModel extends ViewModel {
     private MutableLiveData<List<Interchange>> interchangelist = new MutableLiveData<>();
     public LiveData<List<Interchange>> getInterchanges() {
         return interchangelist;
+    }
+
+    private MutableLiveData<GraphTransport> graphLivaData = new MutableLiveData<>();
+    public LiveData<GraphTransport> getGraph() {
+        return graphLivaData;
     }
     private Handler handler;
 
@@ -144,4 +152,28 @@ public class MapViewModel extends ViewModel {
         }
     }
 
+    public void loadGraph() {
+        // Obtain the lines and interchanges from the ViewModel
+        List<Line> lines = getLines().getValue();
+        List<Interchange> interchanges = getInterchanges().getValue();
+        if (lines != null && interchanges != null) {
+            // Convert the lists to ArrayLists
+            ArrayList<Line> linesArrayList = new ArrayList<>(lines);
+            ArrayList<Interchange> interchangesArrayList = new ArrayList<>(interchanges);
+            // Create a GraphTask to build the graph in the background
+            GraphTask graphTask = new GraphTask(linesArrayList, interchangesArrayList, this::handleGraph);
+            graphTask.execute();
+        }
+    }
+    private void handleGraph(Set<PointTransport> points) {
+        if (points != null && !points.isEmpty()) {
+            // Graph is ready
+            GraphTransport graph = new GraphTransport();
+            graph.setTransportPoints(points);
+            graphLivaData.setValue(graph);
+        } else {
+            // Graph is not ready
+            graphLivaData.setValue(null);
+        }
+    }
 }
