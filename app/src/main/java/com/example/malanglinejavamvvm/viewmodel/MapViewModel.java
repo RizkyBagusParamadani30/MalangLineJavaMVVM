@@ -1,44 +1,50 @@
 package com.example.malanglinejavamvvm.viewmodel;
 
 
+import static android.os.Looper.getMainLooper;
 
 import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.location.Location;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-import com.example.malanglinejavamvvm.R;
-import com.example.malanglinejavamvvm.model.GraphTask;
+import com.example.malanglinejavamvvm.model.DijkstraTask;
+import com.example.malanglinejavamvvm.model.DijkstraTransport;
 import com.example.malanglinejavamvvm.model.GraphTransport;
 import com.example.malanglinejavamvvm.model.Interchange;
 import com.example.malanglinejavamvvm.model.Line;
 import com.example.malanglinejavamvvm.model.LocationModel;
 import com.example.malanglinejavamvvm.model.PointTransport;
+import com.example.malanglinejavamvvm.model.RouteTransport;
 import com.example.malanglinejavamvvm.utilities.Service;
+import com.example.malanglinejavamvvm.view.MapActivity;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
+import androidx.appcompat.app.AlertDialog;
+
+
 
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 
 public class MapViewModel extends ViewModel {
     private MutableLiveData<LocationModel> location = new MutableLiveData<>();
@@ -66,7 +72,22 @@ public class MapViewModel extends ViewModel {
     public LiveData<GraphTransport> getGraph() {
         return graphLivaData;
     }
+    private GraphTransport graph;
+
     private Handler handler;
+
+
+
+
+    private Context context;
+
+    private AlertDialog djikstraDialog;
+
+    public void setGraph(GraphTransport graph) {
+        this.graph = graph;
+        graphLivaData.setValue(graph);
+    }
+
 
 
     public void startLocationUpdates(final Context context) {
@@ -96,7 +117,7 @@ public class MapViewModel extends ViewModel {
             return;
         }
 
-        fusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
+        fusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, getMainLooper());
     }
 
     public void stopLocationUpdates() {
@@ -104,8 +125,6 @@ public class MapViewModel extends ViewModel {
             fusedLocationProviderClient.removeLocationUpdates(locationCallback);
         }
     }
-
-
 
     public void AmbilPoints(Context context, GoogleMap googleMap) {
         handler = new Handler();
@@ -152,28 +171,93 @@ public class MapViewModel extends ViewModel {
         }
     }
 
-    public void loadGraph() {
-        // Obtain the lines and interchanges from the ViewModel
-        List<Line> lines = getLines().getValue();
-        List<Interchange> interchanges = getInterchanges().getValue();
-        if (lines != null && interchanges != null) {
-            // Convert the lists to ArrayLists
-            ArrayList<Line> linesArrayList = new ArrayList<>(lines);
-            ArrayList<Interchange> interchangesArrayList = new ArrayList<>(interchanges);
-            // Create a GraphTask to build the graph in the background
-            GraphTask graphTask = new GraphTask(linesArrayList, interchangesArrayList, this::handleGraph);
-            graphTask.execute();
-        }
-    }
-    private void handleGraph(Set<PointTransport> points) {
-        if (points != null && !points.isEmpty()) {
-            // Graph is ready
-            GraphTransport graph = new GraphTransport();
-            graph.setTransportPoints(points);
-            graphLivaData.setValue(graph);
+    public void calculateShortestPathBetweenMarkers(LatLng currentLocation, LatLng destination, int radius) {
+        Log.d("MapViewModel", "calculateShortestPathBetweenMarkers called with currentLocation: " + currentLocation + ", destination: " + destination + ", radius: " + radius);
+        if (graph != null) {
+            DijkstraTask.DijkstraTaskListener dijkstraListener = new DijkstraTask.DijkstraTaskListener() {
+                @Override
+                public void onDijkstraProgress(DijkstraTask.DijkstraReport report) {
+                    Log.d("MapViewModel", "Dijkstra Progress: " + report);
+                    // Handle progress updates if needed
+                }
+
+                @Override
+                public void onDijkstraComplete(ArrayList<RouteTransport> routes) {
+                    Log.d("MapViewModel", "Dijkstra Complete with routes: " + routes.size());
+                    // Print the routes received
+                    for (RouteTransport route : routes) {
+                        Log.d("MapViewModel", "Route: " + route);
+                    }
+
+                    // Find the route matching the current location and destination
+                    boolean routeFound = false;
+                    for (RouteTransport route : routes) {
+                        LatLng routeSourceLatLng = route.getSource().getLatLng();
+                        LatLng routeDestinationLatLng = route.getDestination().getLatLng();
+
+                        Log.d("MapViewModel", "Route source: " + routeSourceLatLng);
+                        Log.d("MapViewModel", "Route destination: " + routeDestinationLatLng);
+                        Log.d("MapViewModel", "Current location: " + currentLocation);
+                        Log.d("MapViewModel", "Destination: " + destination);
+
+                        if (Math.abs(routeSourceLatLng.latitude - currentLocation.latitude) < 0.000001 &&
+                                Math.abs(routeSourceLatLng.longitude - currentLocation.longitude) < 0.000001 &&
+                                Math.abs(routeDestinationLatLng.latitude - destination.latitude) < 0.000001 &&
+                                Math.abs(routeDestinationLatLng.longitude - destination.longitude) < 0.000001) {
+                            Log.d("MapViewModel", "Matching route found.");
+
+                            List<PointTransport> path = route.getPath();
+                            Log.d("MapViewModel", "Path: " + path);
+
+                            Log.d("MapViewModel", "Source LatLng: " + route.getSource().getLatLng());
+                            Log.d("MapViewModel", "Destination LatLng: " + route.getDestination().getLatLng());
+
+                            if (path != null && !path.isEmpty()) {
+                                Log.d("MapViewModel", "Path is not empty: " + path);
+                                PolylineOptions polylineOptions = new PolylineOptions();
+                                polylineOptions.color(Color.BLUE);
+                                polylineOptions.width(10f);
+
+                                for (PointTransport point : path) {
+                                    polylineOptions.add(point.getLatLng());
+                                }
+
+                                // Add the polyline to the GoogleMap
+                                Handler handler = new Handler(getMainLooper());
+                                handler.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        Log.d("MapViewModel", "Adding polyline to map");
+                                        // Call the drawPolyline method in the MapActivity
+                                        ((MapActivity) context).drawPolyline(path);
+                                    }
+                                });
+                            } else {
+                                Log.d("MapViewModel", "Path is empty");
+                            }
+
+                            routeFound = true;
+                            break;
+                        }
+                    }
+
+                    if (!routeFound) {
+                        Log.d("MapViewModel", "No matching route found for the given locations.");
+                    }
+                }
+
+                @Override
+                public void onDijkstraError(Exception ex) {
+                    Log.e("MapViewModel", "Dijkstra Error: ", ex);
+                    // Handle any errors during the algorithm calculation
+                }
+            };
+
+            DijkstraTask dijkstraTask = new DijkstraTask(graph, currentLocation, destination,
+                    DijkstraTransport.Priority.COST, DijkstraTransport.Priority.DISTANCE, radius, dijkstraListener);
+            dijkstraTask.execute();
         } else {
-            // Graph is not ready
-            graphLivaData.setValue(null);
+            Log.d("MapViewModel", "Graph is null");
         }
     }
 }

@@ -70,7 +70,7 @@ public class MapUtilities {
 
     public static Marker drawInterchangeMarker(GoogleMap map, LatLng position) {
         MarkerOptions markerOptions = new MarkerOptions()
-//                .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_circle))
+                .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_circle))
                 .position(position)
                 .anchor(0.5f, 0.5f);
         return map.addMarker(markerOptions);

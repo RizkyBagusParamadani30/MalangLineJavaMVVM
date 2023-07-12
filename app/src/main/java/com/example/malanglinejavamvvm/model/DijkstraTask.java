@@ -20,7 +20,7 @@ public class DijkstraTask extends AsyncTask<Void, DijkstraTask.DijkstraReport, A
 
     private DijkstraReport report;
 
-    public DijkstraTask(GraphTransport graph, LatLng source, LatLng destination, DijkstraTransport.Priority priority, int distance, DijkstraTaskListener listener) {
+    public DijkstraTask(GraphTransport graph, LatLng source, LatLng destination, DijkstraTransport.Priority priority, DijkstraTransport.Priority distance1, int distance, DijkstraTaskListener listener) {
         this.graph = graph;
         this.source = source;
         this.destination = destination;

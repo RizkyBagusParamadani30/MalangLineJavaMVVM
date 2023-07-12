@@ -15,18 +15,20 @@ import com.example.malanglinejavamvvm.model.Interchange;
 import com.example.malanglinejavamvvm.model.Line;
 import com.example.malanglinejavamvvm.model.LocationModel;
 import com.example.malanglinejavamvvm.model.PointTransport;
+import com.example.malanglinejavamvvm.utilities.MapUtilities;
 import com.example.malanglinejavamvvm.viewmodel.MapViewModel;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polygon;
-import com.google.android.gms.maps.model.PolygonOptions;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
 import java.util.ArrayList;
@@ -39,6 +41,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private Marker currentLocationMarker,destinationMarker;
     private Polygon polygon;
     private GraphTransport graph;
+
+    private Polyline routePolyline; // Added polyline variable
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -54,14 +58,14 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             }
         });
 
-        viewModel.getLines().observe(this, new Observer<List<Line>>() {
-            @Override
-            public void onChanged(List<Line> lines) {
-                if (googleMap != null) {
-                    viewModel.bindPolylineToMap(googleMap);
-                }
-            }
-        });
+//        viewModel.getLines().observe(this, new Observer<List<Line>>() {
+//            @Override
+//            public void onChanged(List<Line> lines) {
+//                if (googleMap != null) {
+//                    viewModel.bindPolylineToMap(googleMap);
+//                }
+//            }
+//        });
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
@@ -85,6 +89,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         // Parse the JSON data and update the ViewModel
         viewModel.AmbilPoints(getApplicationContext(), googleMap);
+
 
         // Observe the lines and interchanges data in the ViewModel
         viewModel.getLines().observe(this, new Observer<List<Line>>() {
@@ -127,25 +132,12 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             // Graph is ready
             graph = new GraphTransport();
             graph.setTransportPoints(points);
+            viewModel.setGraph(graph);
             Toast.makeText(this, "Graph generated from " + points.size() + " points,",
                     Toast.LENGTH_SHORT).show();
         } else {
             // Graph is not ready
             Toast.makeText(this, "Graph is not available", Toast.LENGTH_SHORT).show();
-        }
-        if (graph != null && googleMap != null) {
-            // Create a PolylineOptions object to configure the polyline
-            PolylineOptions polylineOptions = new PolylineOptions();
-            // Set the color of the polyline to black
-            polylineOptions.color(Color.BLACK);
-            polylineOptions.width(1f);
-            // Loop through each PointTransport in the graph
-            for (PointTransport point : graph.getPointTransports()) {
-                // Add the LatLng coordinates of the point to the polyline
-                polylineOptions.add(new LatLng(point.lat, point.lng));
-            }
-            // Add the polyline to the map
-            googleMap.addPolyline(polylineOptions);
         }
     }
 
@@ -168,16 +160,25 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
     }
     public void onMapLongClick(LatLng latilongi){
+        if (this.graph == null) {
+            Toast.makeText(this, "Graph is not ready yet.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         if (destinationMarker  != null ){
             destinationMarker.remove();
             destinationMarker = null;
-            if (polygon != null){
-                polygon.remove();
-                polygon=null;
-            }
         }
-        MarkerOptions destinationMarkerOption = new MarkerOptions().position(latilongi).title("Tujuan");
-        destinationMarker = googleMap.addMarker(destinationMarkerOption);
+
+        this.destinationMarker = MapUtilities.drawMarker(
+                this.googleMap, latilongi, BitmapDescriptorFactory.HUE_GREEN, "Destination", "Tap to show route\nto this location");
+
+
+        LatLng currentLocation = currentLocationMarker.getPosition();
+        LatLng destination= destinationMarker.getPosition();
+        int radius = 600; // Set your desired radius value here
+        viewModel.calculateShortestPathBetweenMarkers(currentLocation, destination,radius);
+
 
     }
     @Override
@@ -186,6 +187,26 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         // Stop location updates
         viewModel.stopLocationUpdates();
+    }
+
+    public void drawPolyline(List<PointTransport> path) {
+        // Remove existing polyline if it exists
+        if (routePolyline != null) {
+            routePolyline.remove();
+        }
+
+        // Create a PolylineOptions object and configure its appearance
+        PolylineOptions polylineOptions = new PolylineOptions()
+                .color(Color.BLUE)
+                .width(10f);
+
+        // Add the LatLng points from the path to the PolylineOptions
+        for (PointTransport point : path) {
+            polylineOptions.add(point.getLatLng());
+        }
+
+        // Add the polyline to the map and assign it to routePolyline variable
+        routePolyline = googleMap.addPolyline(polylineOptions);
     }
 }
 
