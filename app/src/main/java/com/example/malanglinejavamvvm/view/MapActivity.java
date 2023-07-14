@@ -1,6 +1,10 @@
 package com.example.malanglinejavamvvm.view;
 
+import android.graphics.Color;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -28,6 +32,7 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.PolylineOptions;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,11 +45,16 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private GraphTransport graph;
 
     private RouteAdapter routeAdapter;
+    private RecyclerView recyclerView;
+
+    private boolean isRecyclerViewExpanded = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.map_activity);
+        LinearLayout cardContainer = findViewById(R.id.card_container);
+        cardContainer.setVisibility(View.GONE);
 
         // Initialize the ViewModel
         viewModel = new ViewModelProvider(this).get(MapViewModel.class);
@@ -69,12 +79,30 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         routeAdapter = new RouteAdapter(new ArrayList<>(), new RouteAdapter.RouteAdapterItemClickListener() {
             @Override
             public void onItemClick(RouteTransport routeTransport) {
-                // Handle item click event
+
+                // Show the line corresponding to the clicked routeTransport on the map
+                List<PointTransport> path = routeTransport.getPath();
+                if (path != null && path.size() > 0) {
+                    Log.d("MapActivity","Gambar Rute");
+                    // Create a PolylineOptions object for the line
+                    PolylineOptions polylineOptions = new PolylineOptions()
+                            .color(Color.RED)
+                            .width(5f);
+                    for (PointTransport pointTransport : path) {
+                        LatLng latLng = new LatLng(pointTransport.lat(), pointTransport.lng());
+                        polylineOptions.add(latLng);
+                    }
+                    // Add the polyline to the map
+                    googleMap.addPolyline(polylineOptions);
+                    // Minimize the RecyclerView
+                    recyclerView.setVisibility(View.GONE);
+                    isRecyclerViewExpanded = false;
+                }
             }
         });
-        RecyclerView recyclerView = findViewById(R.id.route_detail_container);
-        recyclerView.setAdapter(routeAdapter);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        this.recyclerView = findViewById(R.id.route_detail_container);
+        this.recyclerView.setAdapter(routeAdapter);
+        this.recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         viewModel.getRoutes().observe(this, new Observer<List<RouteTransport>>() {
             @Override
@@ -189,6 +217,25 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         this.destinationMarker = MapUtilities.drawMarker(
                 this.googleMap, latilongi, BitmapDescriptorFactory.HUE_GREEN, "Destination", "Tap to show route\nto this location");
+
+        // Show the card_container
+        LinearLayout cardContainer = findViewById(R.id.card_container);
+        cardContainer.setVisibility(View.VISIBLE);
+
+        // Handle the click on the card_container
+        cardContainer.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Handle the click action here, e.g., expand/collapse the RecyclerView
+                if (isRecyclerViewExpanded) {
+                    recyclerView.setVisibility(View.GONE);
+                    isRecyclerViewExpanded = false;
+                } else {
+                    recyclerView.setVisibility(View.VISIBLE);
+                    isRecyclerViewExpanded = true;
+                }
+            }
+        });
 
 
         LatLng currentLocation = currentLocationMarker.getPosition();

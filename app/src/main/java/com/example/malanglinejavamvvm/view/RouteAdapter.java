@@ -98,4 +98,6 @@ public class RouteAdapter extends RecyclerView.Adapter<RouteAdapter.ViewHolder> 
         return routes;
     }
 
+
+
 }

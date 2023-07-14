@@ -75,10 +75,6 @@ public class MapViewModel extends ViewModel {
     public LiveData<ArrayList<RouteTransport>> getRoutes() {
         return routeList;
     }
-
-
-
-
     private Context context;
 
     private AlertDialog djikstraDialog;
