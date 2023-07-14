@@ -1,5 +1,6 @@
 package com.example.malanglinejavamvvm.view;
 
+import android.annotation.SuppressLint;
 import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,10 +12,12 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.malanglinejavamvvm.R;
+import com.example.malanglinejavamvvm.model.PointTransport;
 import com.example.malanglinejavamvvm.model.RouteTransport;
 import com.example.malanglinejavamvvm.utilities.Helper;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 
@@ -22,6 +25,7 @@ public class RouteAdapter extends RecyclerView.Adapter<RouteAdapter.ViewHolder> 
 
     private RouteAdapterItemClickListener listener;
     private ArrayList<RouteTransport> routes;
+
 
     class ViewHolder extends RecyclerView.ViewHolder {
 
@@ -75,13 +79,23 @@ public class RouteAdapter extends RecyclerView.Adapter<RouteAdapter.ViewHolder> 
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        RouteTransport routeTransport = this.routes.get(position);
-        holder.bind(routeTransport, this.listener);
+        RouteTransport routeTransport = routes.get(position);
+        holder.bind(routeTransport, listener);
     }
 
     @Override
     public int getItemCount() {
         return this.routes.size();
+    }
+    @SuppressLint("NotifyDataSetChanged")
+    public void setRoutes(ArrayList<RouteTransport> routes) {
+        this.routes = routes;
+        notifyDataSetChanged();
+    }
+
+    // Retrieve the routes
+    public ArrayList<RouteTransport> getRoutes() {
+        return routes;
     }
 
 }

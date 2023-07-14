@@ -7,13 +7,11 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
 import android.location.Location;
 import android.os.Handler;
-import android.os.Looper;
 import android.util.Log;
 
-import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.LiveData;
@@ -29,7 +27,6 @@ import com.example.malanglinejavamvvm.model.LocationModel;
 import com.example.malanglinejavamvvm.model.PointTransport;
 import com.example.malanglinejavamvvm.model.RouteTransport;
 import com.example.malanglinejavamvvm.utilities.Service;
-import com.example.malanglinejavamvvm.view.MapActivity;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -38,9 +35,6 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.PolylineOptions;
-import androidx.appcompat.app.AlertDialog;
-
-
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -75,6 +69,12 @@ public class MapViewModel extends ViewModel {
     private GraphTransport graph;
 
     private Handler handler;
+
+    private MutableLiveData<ArrayList<RouteTransport>> routeList = new MutableLiveData<>();
+
+    public LiveData<ArrayList<RouteTransport>> getRoutes() {
+        return routeList;
+    }
 
 
 
@@ -174,6 +174,7 @@ public class MapViewModel extends ViewModel {
     public void calculateShortestPathBetweenMarkers(LatLng currentLocation, LatLng destination, int radius) {
         Log.d("MapViewModel", "calculateShortestPathBetweenMarkers called with currentLocation: " + currentLocation + ", destination: " + destination + ", radius: " + radius);
         if (graph != null) {
+
             DijkstraTask.DijkstraTaskListener dijkstraListener = new DijkstraTask.DijkstraTaskListener() {
                 @Override
                 public void onDijkstraProgress(DijkstraTask.DijkstraReport report) {
@@ -200,10 +201,10 @@ public class MapViewModel extends ViewModel {
                         Log.d("MapViewModel", "Current location: " + currentLocation);
                         Log.d("MapViewModel", "Destination: " + destination);
 
-                        if (Math.abs(routeSourceLatLng.latitude - currentLocation.latitude) < 0.000001 &&
-                                Math.abs(routeSourceLatLng.longitude - currentLocation.longitude) < 0.000001 &&
-                                Math.abs(routeDestinationLatLng.latitude - destination.latitude) < 0.000001 &&
-                                Math.abs(routeDestinationLatLng.longitude - destination.longitude) < 0.000001) {
+                        if (Math.abs(routeSourceLatLng.latitude - currentLocation.latitude) < 100 &&
+                                Math.abs(routeSourceLatLng.longitude - currentLocation.longitude) < 100 &&
+                                Math.abs(routeDestinationLatLng.latitude - destination.latitude) < 100 &&
+                                Math.abs(routeDestinationLatLng.longitude - destination.longitude) < 100) {
                             Log.d("MapViewModel", "Matching route found.");
 
                             List<PointTransport> path = route.getPath();
@@ -214,24 +215,7 @@ public class MapViewModel extends ViewModel {
 
                             if (path != null && !path.isEmpty()) {
                                 Log.d("MapViewModel", "Path is not empty: " + path);
-                                PolylineOptions polylineOptions = new PolylineOptions();
-                                polylineOptions.color(Color.BLUE);
-                                polylineOptions.width(10f);
-
-                                for (PointTransport point : path) {
-                                    polylineOptions.add(point.getLatLng());
-                                }
-
-                                // Add the polyline to the GoogleMap
-                                Handler handler = new Handler(getMainLooper());
-                                handler.post(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        Log.d("MapViewModel", "Adding polyline to map");
-                                        // Call the drawPolyline method in the MapActivity
-                                        ((MapActivity) context).drawPolyline(path);
-                                    }
-                                });
+                                routeList.postValue(routes);
                             } else {
                                 Log.d("MapViewModel", "Path is empty");
                             }
@@ -244,6 +228,8 @@ public class MapViewModel extends ViewModel {
                     if (!routeFound) {
                         Log.d("MapViewModel", "No matching route found for the given locations.");
                     }
+
+
                 }
 
                 @Override

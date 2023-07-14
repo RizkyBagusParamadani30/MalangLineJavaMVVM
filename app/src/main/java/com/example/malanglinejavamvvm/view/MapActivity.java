@@ -1,12 +1,13 @@
 package com.example.malanglinejavamvvm.view;
 
-import android.graphics.Color;
 import android.os.Bundle;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.malanglinejavamvvm.R;
 import com.example.malanglinejavamvvm.model.GraphTask;
@@ -15,6 +16,7 @@ import com.example.malanglinejavamvvm.model.Interchange;
 import com.example.malanglinejavamvvm.model.Line;
 import com.example.malanglinejavamvvm.model.LocationModel;
 import com.example.malanglinejavamvvm.model.PointTransport;
+import com.example.malanglinejavamvvm.model.RouteTransport;
 import com.example.malanglinejavamvvm.utilities.MapUtilities;
 import com.example.malanglinejavamvvm.viewmodel.MapViewModel;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -26,10 +28,6 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.maps.model.Polygon;
-import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.Polyline;
-import com.google.android.gms.maps.model.PolylineOptions;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,10 +37,10 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private GoogleMap googleMap;
     private MapViewModel viewModel;
     private Marker currentLocationMarker,destinationMarker;
-    private Polygon polygon;
     private GraphTransport graph;
 
-    private Polyline routePolyline; // Added polyline variable
+    private RouteAdapter routeAdapter;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -67,10 +65,29 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 //            }
 //        });
 
+        // Initialize the routeAdapter and set it to the RecyclerView
+        routeAdapter = new RouteAdapter(new ArrayList<>(), new RouteAdapter.RouteAdapterItemClickListener() {
+            @Override
+            public void onItemClick(RouteTransport routeTransport) {
+                // Handle item click event
+            }
+        });
+        RecyclerView recyclerView = findViewById(R.id.route_detail_container);
+        recyclerView.setAdapter(routeAdapter);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        viewModel.getRoutes().observe(this, new Observer<List<RouteTransport>>() {
+            @Override
+            public void onChanged(List<RouteTransport> routes) {
+                // Update the route list in the adapter
+                routeAdapter.setRoutes((ArrayList<RouteTransport>) routes);
+            }
+        });
+
         // Obtain the SupportMapFragment and get notified when the map is ready to be used
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+        assert mapFragment != null;
         mapFragment.getMapAsync(this);
-
 
     }
 
@@ -89,7 +106,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         // Parse the JSON data and update the ViewModel
         viewModel.AmbilPoints(getApplicationContext(), googleMap);
-
 
         // Observe the lines and interchanges data in the ViewModel
         viewModel.getLines().observe(this, new Observer<List<Line>>() {
@@ -135,6 +151,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             viewModel.setGraph(graph);
             Toast.makeText(this, "Graph generated from " + points.size() + " points,",
                     Toast.LENGTH_SHORT).show();
+
         } else {
             // Graph is not ready
             Toast.makeText(this, "Graph is not available", Toast.LENGTH_SHORT).show();
@@ -176,10 +193,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         LatLng currentLocation = currentLocationMarker.getPosition();
         LatLng destination= destinationMarker.getPosition();
-        int radius = 600; // Set your desired radius value here
+        int radius = 500; // Set your desired radius value here
         viewModel.calculateShortestPathBetweenMarkers(currentLocation, destination,radius);
-
-
     }
     @Override
     protected void onStop() {
@@ -187,26 +202,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         // Stop location updates
         viewModel.stopLocationUpdates();
-    }
-
-    public void drawPolyline(List<PointTransport> path) {
-        // Remove existing polyline if it exists
-        if (routePolyline != null) {
-            routePolyline.remove();
-        }
-
-        // Create a PolylineOptions object and configure its appearance
-        PolylineOptions polylineOptions = new PolylineOptions()
-                .color(Color.BLUE)
-                .width(10f);
-
-        // Add the LatLng points from the path to the PolylineOptions
-        for (PointTransport point : path) {
-            polylineOptions.add(point.getLatLng());
-        }
-
-        // Add the polyline to the map and assign it to routePolyline variable
-        routePolyline = googleMap.addPolyline(polylineOptions);
     }
 }
 
