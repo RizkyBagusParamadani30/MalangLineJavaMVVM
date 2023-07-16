@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.lifecycle.ViewModelStoreOwner;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -24,6 +25,7 @@ import com.example.malanglinejavamvvm.model.PointTransport;
 import com.example.malanglinejavamvvm.model.RouteTransport;
 import com.example.malanglinejavamvvm.utilities.MapUtilities;
 import com.example.malanglinejavamvvm.viewmodel.MapViewModel;
+import com.example.malanglinejavamvvm.viewmodel.ViewModelFactory;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -33,6 +35,7 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
 import java.util.ArrayList;
@@ -40,18 +43,14 @@ import java.util.List;
 import java.util.Set;
 
 public class MapActivity extends AppCompatActivity implements OnMapReadyCallback ,GoogleMap.OnMapLongClickListener{
-    private static final int YOUR_DESIRED_RADIUS = 500;
     private GoogleMap googleMap;
     private MapViewModel viewModel;
     private Marker currentLocationMarker,destinationMarker;
     private GraphTransport graph;
-
     private RouteAdapter routeAdapter;
     private RecyclerView recyclerView;
-
+    private Polyline currentPolyline;
     private boolean isRecyclerViewExpanded = true;
-
-    private LiveData<LocationModel> currentLocationLiveData;
 
 
     @Override
@@ -62,7 +61,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         cardContainer.setVisibility(View.GONE);
 
         // Initialize the ViewModel
-        viewModel = new ViewModelProvider(this).get(MapViewModel.class);
+        viewModel = new ViewModelProvider(this, new ViewModelFactory(getApplication())).get(MapViewModel.class);
+
+
         viewModel.getLocation().observe(this, new Observer<LocationModel>() {
             @Override
             public void onChanged(LocationModel locationModel) {
@@ -71,8 +72,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             }
         });
 
-        // Initialize currentLocationLiveData here
-        currentLocationLiveData = viewModel.getLocation();
         // Initialize the routeAdapter and set it to the RecyclerView
         routeAdapter = new RouteAdapter(new ArrayList<>(), new RouteAdapter.RouteAdapterItemClickListener() {
             @Override
@@ -87,8 +86,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         this.recyclerView = findViewById(R.id.route_detail_container);
         this.recyclerView.setAdapter(routeAdapter);
         this.recyclerView.setLayoutManager(new LinearLayoutManager(this));
-
-
         viewModel.getRoutes().observe(this, new Observer<List<RouteTransport>>() {
             @Override
             public void onChanged(List<RouteTransport> routes) {
@@ -127,7 +124,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             public void onChanged(List<Line> lines) {
                 // Check if both lines and interchanges data is available
                 if (lines != null && viewModel.getInterchanges().getValue() != null) {
-                    loadGraph();
+                    viewModel.loadGraph();
                 }
             }
         });
@@ -137,40 +134,11 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             public void onChanged(List<Interchange> interchanges) {
                 // Check if both lines and interchanges data is available
                 if (viewModel.getLines().getValue() != null && interchanges != null) {
-                    loadGraph();
+                    viewModel.loadGraph();
                 }
             }
         });
 
-    }
-
-    private void loadGraph() {
-        // Obtain the lines and interchanges from the ViewModel
-        List<Line> lines = viewModel.getLines().getValue();
-        List<Interchange> interchanges = viewModel.getInterchanges().getValue();
-        if (lines != null && interchanges != null) {
-            // Convert the lists to ArrayLists
-            ArrayList<Line> linesArrayList = new ArrayList<>(lines);
-            ArrayList<Interchange> interchangesArrayList = new ArrayList<>(interchanges);
-            // Create a GraphTask to build the graph in the background
-            GraphTask graphTask = new GraphTask(linesArrayList, interchangesArrayList, this::handleGraph);
-            graphTask.execute();
-        }
-    }
-
-    private void handleGraph(Set<PointTransport> points) {
-        if (points != null && !points.isEmpty()) {
-            // Graph is ready
-            graph = new GraphTransport();
-            graph.setTransportPoints(points);
-            viewModel.setGraph(graph);
-            Toast.makeText(this, "Graph generated from " + points.size() + " points,",
-                    Toast.LENGTH_SHORT).show();
-
-        } else {
-            // Graph is not ready
-            Toast.makeText(this, "Graph is not available", Toast.LENGTH_SHORT).show();
-        }
     }
 
     private void updateCurrentLocationMarker(LatLng latLng) {
@@ -184,6 +152,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         }
     }
 
+
+
     private void moveCameraToLocation(LatLng latLng) {
         CameraPosition cameraPosition = new CameraPosition.Builder()
                 .target(latLng)
@@ -191,8 +161,10 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 .build();
         googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
     }
+
+
     public void onMapLongClick(LatLng latilongi){
-        if (this.graph == null) {
+        if (viewModel.getGraph() == null) {
             Toast.makeText(this, "Graph is not ready yet.", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -201,6 +173,10 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             destinationMarker.remove();
             destinationMarker = null;
         }
+
+       viewModel.removePolyline();
+
+
 
         this.destinationMarker = MapUtilities.drawMarker(
                 this.googleMap, latilongi, BitmapDescriptorFactory.HUE_GREEN, "Destination", "Tap to show route\nto this location");
@@ -230,6 +206,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         viewModel.calculateShortestPathBetweenMarkers(MapActivity.this,currentLocation, destination,radius);
 
     }
+
+
     @Override
     protected void onStop() {
         super.onStop();

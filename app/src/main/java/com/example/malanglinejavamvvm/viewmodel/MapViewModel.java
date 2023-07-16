@@ -5,6 +5,7 @@ import static android.os.Looper.getMainLooper;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.Application;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -13,6 +14,7 @@ import android.os.Handler;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
@@ -25,6 +27,7 @@ import androidx.lifecycle.ViewModel;
 import com.example.malanglinejavamvvm.R;
 import com.example.malanglinejavamvvm.model.DijkstraTask;
 import com.example.malanglinejavamvvm.model.DijkstraTransport;
+import com.example.malanglinejavamvvm.model.GraphTask;
 import com.example.malanglinejavamvvm.model.GraphTransport;
 import com.example.malanglinejavamvvm.model.Interchange;
 import com.example.malanglinejavamvvm.model.Line;
@@ -46,6 +49,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 public class MapViewModel extends ViewModel {
     private MutableLiveData<LocationModel> location = new MutableLiveData<>();
@@ -89,6 +93,16 @@ public class MapViewModel extends ViewModel {
     public void setGraph(GraphTransport graph) {
         this.graph = graph;
         graphLivaData.setValue(graph);
+    }
+
+    private ArrayList<RouteTransport> routesList = new ArrayList<>();
+
+    private Context context;
+
+    private Application application;
+    public MapViewModel(Application application) {
+        this.application = application;
+        context = application.getApplicationContext();
     }
 
 
@@ -174,6 +188,13 @@ public class MapViewModel extends ViewModel {
         }
     }
 
+    public void removePolyline() {
+        if (previousPolyline != null) {
+            previousPolyline.remove();
+            previousPolyline = null;
+        }
+    }
+
     public void calculateShortestPathBetweenMarkers(Context context,LatLng currentLocation, LatLng destination, int radius) {
         Log.d("MapViewModel", "calculateShortestPathBetweenMarkers called with currentLocation: " + currentLocation + ", destination: " + destination + ", radius: " + radius);
         if (graph != null) {
@@ -194,6 +215,8 @@ public class MapViewModel extends ViewModel {
 
                 @Override
                 public void onDijkstraComplete(ArrayList<RouteTransport> routes) {
+                    // Store the routes in the class-level variable
+                    routesList = routes;
                     Log.d("MapViewModel", "Dijkstra Complete with routes: " + routes.size());
                     // Print the routes received
                     for (RouteTransport route : routes) {
@@ -257,15 +280,40 @@ public class MapViewModel extends ViewModel {
         }
     }
 
+
+    public void loadGraph() {
+        // Obtain the lines and interchanges from the ViewModel
+        List<Line> lines = getLines().getValue();
+        List<Interchange> interchanges = getInterchanges().getValue();
+        if (lines != null && interchanges != null) {
+            // Convert the lists to ArrayLists
+            ArrayList<Line> linesArrayList = new ArrayList<>(lines);
+            ArrayList<Interchange> interchangesArrayList = new ArrayList<>(interchanges);
+            // Create a GraphTask to build the graph in the background
+            GraphTask graphTask = new GraphTask(linesArrayList, interchangesArrayList, this::handleGraph);
+            graphTask.execute();
+        }
+    }
+
+    public void handleGraph(Set<PointTransport> points) {
+        if (points != null && !points.isEmpty()) {
+            // Graph is ready
+            graph = new GraphTransport();
+            graph.setTransportPoints(points);
+            graphLivaData.setValue(graph);
+            Toast.makeText(context, "Graph generated from " + points.size() + " points", Toast.LENGTH_SHORT).show();
+        } else {
+            // Graph is not ready
+            Toast.makeText(context, "Graph is not available", Toast.LENGTH_SHORT).show();
+        }
+    }
+
     public void handleRouteItemClick(RouteTransport routeTransport, GoogleMap googleMap) {
         if (googleMap == null) {
             return; // Exit the method if googleMap is null
         }
 
-        // Remove the previous polyline from the map if it exists
-        if (previousPolyline != null) {
-            previousPolyline.remove();
-        }
+       removePolyline();
 
         List<PointTransport> path = routeTransport.getPath();
         if (path != null && path.size() > 0) {
@@ -284,10 +332,8 @@ public class MapViewModel extends ViewModel {
             Polyline polyline = googleMap.addPolyline(polylineOptions);
             previousPolyline = polyline;
 
-            // Set the selected route to be shown in the minimized RecyclerView
-            ArrayList<RouteTransport> selectedRouteList = new ArrayList<>();
-            selectedRouteList.add(routeTransport);
-            routeList.postValue(selectedRouteList);
+            routeList.postValue(routesList);
+
         }
     }
 }
