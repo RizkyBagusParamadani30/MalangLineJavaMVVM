@@ -8,7 +8,6 @@ import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
 import android.location.Location;
 import android.os.Handler;
 import android.util.Log;
@@ -34,6 +33,7 @@ import com.example.malanglinejavamvvm.model.Line;
 import com.example.malanglinejavamvvm.model.LocationModel;
 import com.example.malanglinejavamvvm.model.PointTransport;
 import com.example.malanglinejavamvvm.model.RouteTransport;
+import com.example.malanglinejavamvvm.utilities.MapUtilities;
 import com.example.malanglinejavamvvm.utilities.Service;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
@@ -42,6 +42,7 @@ import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -56,28 +57,37 @@ public class MapViewModel extends ViewModel {
     private FusedLocationProviderClient fusedLocationProviderClient;
     private LocationRequest locationRequest;
     private LocationCallback locationCallback;
+    private Marker endMarker;
+    private Marker startMarker;
+
     public LiveData<LocationModel> getLocation() {
         return location;
     }
+
     public void setLocation(LocationModel LocationModel) {
         location.setValue(LocationModel);
     }
+
     private GoogleMap googleMap;
     private final List<PolylineOptions> polylineOptionsList = new ArrayList<>();
     private MutableLiveData<List<Line>> lineList = new MutableLiveData<>();
+
     public LiveData<List<Line>> getLines() {
         return lineList;
     }
 
     private MutableLiveData<List<Interchange>> interchangelist = new MutableLiveData<>();
+
     public LiveData<List<Interchange>> getInterchanges() {
         return interchangelist;
     }
 
     private MutableLiveData<GraphTransport> graphLivaData = new MutableLiveData<>();
+
     public LiveData<GraphTransport> getGraph() {
         return graphLivaData;
     }
+
     private GraphTransport graph;
 
     private Handler handler;
@@ -88,7 +98,8 @@ public class MapViewModel extends ViewModel {
         return routeList;
     }
 
-    private Polyline previousPolyline;;
+    private Polyline previousPolyline;
+    ;
 
     public void setGraph(GraphTransport graph) {
         this.graph = graph;
@@ -100,11 +111,11 @@ public class MapViewModel extends ViewModel {
     private Context context;
 
     private Application application;
+
     public MapViewModel(Application application) {
         this.application = application;
         context = application.getApplicationContext();
     }
-
 
 
     public void startLocationUpdates(final Context context) {
@@ -158,6 +169,7 @@ public class MapViewModel extends ViewModel {
                     }
                 });
             }
+
             @Override
             public void onPointsRequestError(String error) {
                 // Handle the error case
@@ -195,7 +207,7 @@ public class MapViewModel extends ViewModel {
         }
     }
 
-    public void calculateShortestPathBetweenMarkers(Context context,LatLng currentLocation, LatLng destination, int radius) {
+    public void calculateShortestPathBetweenMarkers(Context context, LatLng currentLocation, LatLng destination, int radius) {
         Log.d("MapViewModel", "calculateShortestPathBetweenMarkers called with currentLocation: " + currentLocation + ", destination: " + destination + ", radius: " + radius);
         if (graph != null) {
             // Inflate the custom layout for the progress dialog
@@ -254,10 +266,10 @@ public class MapViewModel extends ViewModel {
                             }
 
                             routeFound = true;
+
                             break;
                         }
                     }
-
                     if (!routeFound) {
                         Log.d("MapViewModel", "No matching route found for the given locations.");
                     }
@@ -308,32 +320,87 @@ public class MapViewModel extends ViewModel {
         }
     }
 
-    public void handleRouteItemClick(RouteTransport routeTransport, GoogleMap googleMap) {
-        if (googleMap == null) {
-            return; // Exit the method if googleMap is null
+    private void drawPath(List<PointTransport> path, GoogleMap googleMap, Marker startMarker, Marker endMarker,
+                          List<Polyline> polylines, List<Marker> markers) {
+        PolylineOptions startWalkingPolylineOptions = MapUtilities.getWalkingPolylineOptions();
+        startWalkingPolylineOptions.add(startMarker.getPosition()).add(endMarker.getPosition());
+        polylines.add(googleMap.addPolyline(startWalkingPolylineOptions));
+        PolylineOptions polylineOptions = new PolylineOptions().width(10);
+        PointTransport prevPoint = null;
+        for (PointTransport currentPoint : path) {
+            if (prevPoint == null)
+                polylineOptions.color(currentPoint.getColor());
+            if (prevPoint != null && currentPoint.getIdLine() != prevPoint.getIdLine()) {
+                // finish the polyline
+                Polyline route = googleMap.addPolyline(polylineOptions);
+                polylines.add(route);
+                // draw interchange markers
+                markers.add(MapUtilities.drawInterchangeMarker(googleMap, prevPoint.getLatLng()));
+                markers.add(MapUtilities.drawInterchangeMarker(googleMap, currentPoint.getLatLng()));
+                // draw interchange walking paths
+                PolylineOptions transferWalkingPolylineOptions = MapUtilities.getWalkingPolylineOptions();
+                transferWalkingPolylineOptions.add(prevPoint.getLatLng()).add(currentPoint.getLatLng());
+                polylines.add(googleMap.addPolyline(transferWalkingPolylineOptions));
+                // start next line polyline
+                polylineOptions = new PolylineOptions().width(10).color(currentPoint.getColor());
+            }
+            // add current point
+            polylineOptions.add(new LatLng(currentPoint.lat(), currentPoint.lng()));
+            prevPoint = currentPoint;
+        }
+        polylines.add(googleMap.addPolyline(polylineOptions));
+        assert prevPoint != null;
+        markers.add(MapUtilities.drawInterchangeMarker(googleMap, prevPoint.getLatLng()));
+        if (endMarker != null) {
+            PolylineOptions endWalkingPolylineOptions = MapUtilities.getWalkingPolylineOptions();
+            endWalkingPolylineOptions.add(endMarker.getPosition()).add(endMarker.getPosition());
+            polylines.add(googleMap.addPolyline(endWalkingPolylineOptions));
+        }
+    }
+
+    public void handleRouteItemClick(RouteTransport routeTransport, GoogleMap googleMap,
+                                     List<Polyline> polylines, List<Marker> interchangeMarkers) {
+        if (googleMap == null || routeTransport == null) {
+            return;
         }
 
-       removePolyline();
+        LatLng startLatLng = routeTransport.getSource().getLatLng();
+        LatLng endLatLng = routeTransport.getDestination().getLatLng();
+
+        if (startLatLng == null || endLatLng == null) {
+            return;
+        }
+
+        // Remove any existing markers before adding new ones
+        removeMarkers();
+
+        // Draw start and end markers
+        Marker startMarker = MapUtilities.drawInterchangeMarker(googleMap, startLatLng);
+        Marker endMarker = MapUtilities.drawInterchangeMarker(googleMap, endLatLng);
 
         List<PointTransport> path = routeTransport.getPath();
-        if (path != null && path.size() > 0) {
-            PointTransport firstPoint = path.get(0);
-            int color = Color.parseColor(firstPoint.getColorString());
-
-            PolylineOptions polylineOptions = new PolylineOptions()
-                    .color(color)
-                    .width(15f);
-
-            for (PointTransport pointTransport : path) {
-                LatLng latLng = new LatLng(pointTransport.lat(), pointTransport.lng());
-                polylineOptions.add(latLng);
-            }
-
-            Polyline polyline = googleMap.addPolyline(polylineOptions);
-            previousPolyline = polyline;
-
-            routeList.postValue(routesList);
-
+        if (path != null && !path.isEmpty()) {
+            // Call the drawPath method passing the required parameters
+            drawPath(path, googleMap, startMarker, endMarker, polylines, interchangeMarkers);
         }
+    }
+
+    private void removeMarkers() {
+        // Clear any existing markers
+        if (startMarker != null) {
+            startMarker.remove();
+            startMarker = null;
+        }
+        if (endMarker != null) {
+            endMarker.remove();
+            endMarker = null;
+        }
+    }
+
+    private void clearInterchangeMarkers(List<Marker> interchangeMarkers) {
+        for (Marker marker : interchangeMarkers) {
+            marker.remove();
+        }
+        interchangeMarkers.clear();
     }
 }
