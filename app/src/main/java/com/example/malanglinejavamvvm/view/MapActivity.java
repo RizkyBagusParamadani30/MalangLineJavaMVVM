@@ -46,14 +46,11 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private GoogleMap googleMap;
     private MapViewModel viewModel;
     private Marker currentLocationMarker,destinationMarker;
-    private GraphTransport graph;
     private RouteAdapter routeAdapter;
     private RecyclerView recyclerView;
     private Polyline currentPolyline;
     private boolean isRecyclerViewExpanded = true;
     private List<Marker> interchangeMarkers = new ArrayList<>();
-    private Marker startMarker; // Initialize this with the start marker on the map
-    private Marker endMarker;
     private List<Polyline> polylines = new ArrayList<>();
 
 
@@ -82,7 +79,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             public void onItemClick(RouteTransport routeTransport) {
 
                 // Show the line corresponding to the clicked routeTransport on the map
-
                 viewModel.handleRouteItemClick(routeTransport, googleMap, polylines, interchangeMarkers);
                 recyclerView.setVisibility(View.GONE);
                 isRecyclerViewExpanded = false;
@@ -162,7 +158,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private void moveCameraToLocation(LatLng latLng) {
         CameraPosition cameraPosition = new CameraPosition.Builder()
                 .target(latLng)
-                .zoom(13f)
+                .zoom(15f)
                 .build();
         googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
     }

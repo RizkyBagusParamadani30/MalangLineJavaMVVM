@@ -325,7 +325,7 @@ public class MapViewModel extends ViewModel {
         PolylineOptions startWalkingPolylineOptions = MapUtilities.getWalkingPolylineOptions();
         startWalkingPolylineOptions.add(startMarker.getPosition()).add(endMarker.getPosition());
         polylines.add(googleMap.addPolyline(startWalkingPolylineOptions));
-        PolylineOptions polylineOptions = new PolylineOptions().width(10);
+        PolylineOptions polylineOptions = new PolylineOptions().width(15);
         PointTransport prevPoint = null;
         for (PointTransport currentPoint : path) {
             if (prevPoint == null)
@@ -342,7 +342,7 @@ public class MapViewModel extends ViewModel {
                 transferWalkingPolylineOptions.add(prevPoint.getLatLng()).add(currentPoint.getLatLng());
                 polylines.add(googleMap.addPolyline(transferWalkingPolylineOptions));
                 // start next line polyline
-                polylineOptions = new PolylineOptions().width(10).color(currentPoint.getColor());
+                polylineOptions = new PolylineOptions().width(15).color(currentPoint.getColor());
             }
             // add current point
             polylineOptions.add(new LatLng(currentPoint.lat(), currentPoint.lng()));
