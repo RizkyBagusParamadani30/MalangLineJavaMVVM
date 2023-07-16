@@ -8,6 +8,7 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -38,7 +39,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-public class MapActivity extends AppCompatActivity implements OnMapReadyCallback ,GoogleMap.OnMapLongClickListener {
+public class MapActivity extends AppCompatActivity implements OnMapReadyCallback ,GoogleMap.OnMapLongClickListener{
+    private static final int YOUR_DESIRED_RADIUS = 500;
     private GoogleMap googleMap;
     private MapViewModel viewModel;
     private Marker currentLocationMarker,destinationMarker;
@@ -48,6 +50,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private RecyclerView recyclerView;
 
     private boolean isRecyclerViewExpanded = true;
+
+    private LiveData<LocationModel> currentLocationLiveData;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,43 +71,23 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             }
         });
 
-//        viewModel.getLines().observe(this, new Observer<List<Line>>() {
-//            @Override
-//            public void onChanged(List<Line> lines) {
-//                if (googleMap != null) {
-//                    viewModel.bindPolylineToMap(googleMap);
-//                }
-//            }
-//        });
-
+        // Initialize currentLocationLiveData here
+        currentLocationLiveData = viewModel.getLocation();
         // Initialize the routeAdapter and set it to the RecyclerView
         routeAdapter = new RouteAdapter(new ArrayList<>(), new RouteAdapter.RouteAdapterItemClickListener() {
             @Override
             public void onItemClick(RouteTransport routeTransport) {
 
                 // Show the line corresponding to the clicked routeTransport on the map
-                List<PointTransport> path = routeTransport.getPath();
-                if (path != null && path.size() > 0) {
-                    Log.d("MapActivity","Gambar Rute");
-                    // Create a PolylineOptions object for the line
-                    PolylineOptions polylineOptions = new PolylineOptions()
-                            .color(Color.RED)
-                            .width(5f);
-                    for (PointTransport pointTransport : path) {
-                        LatLng latLng = new LatLng(pointTransport.lat(), pointTransport.lng());
-                        polylineOptions.add(latLng);
-                    }
-                    // Add the polyline to the map
-                    googleMap.addPolyline(polylineOptions);
-                    // Minimize the RecyclerView
+                    viewModel.handleRouteItemClick(routeTransport, googleMap);
                     recyclerView.setVisibility(View.GONE);
                     isRecyclerViewExpanded = false;
-                }
             }
         });
         this.recyclerView = findViewById(R.id.route_detail_container);
         this.recyclerView.setAdapter(routeAdapter);
         this.recyclerView.setLayoutManager(new LinearLayoutManager(this));
+
 
         viewModel.getRoutes().observe(this, new Observer<List<RouteTransport>>() {
             @Override
@@ -116,6 +101,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         assert mapFragment != null;
         mapFragment.getMapAsync(this);
+
 
     }
 
@@ -155,6 +141,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 }
             }
         });
+
     }
 
     private void loadGraph() {
@@ -237,11 +224,11 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             }
         });
 
-
         LatLng currentLocation = currentLocationMarker.getPosition();
         LatLng destination= destinationMarker.getPosition();
         int radius = 500; // Set your desired radius value here
         viewModel.calculateShortestPathBetweenMarkers(currentLocation, destination,radius);
+
     }
     @Override
     protected void onStop() {
@@ -250,5 +237,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         // Stop location updates
         viewModel.stopLocationUpdates();
     }
+
+
 }
 

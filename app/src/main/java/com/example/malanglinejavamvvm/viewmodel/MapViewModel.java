@@ -7,6 +7,7 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.location.Location;
 import android.os.Handler;
 import android.util.Log;
@@ -34,9 +35,11 @@ import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -57,6 +60,7 @@ public class MapViewModel extends ViewModel {
     public LiveData<List<Line>> getLines() {
         return lineList;
     }
+
     private MutableLiveData<List<Interchange>> interchangelist = new MutableLiveData<>();
     public LiveData<List<Interchange>> getInterchanges() {
         return interchangelist;
@@ -75,9 +79,8 @@ public class MapViewModel extends ViewModel {
     public LiveData<ArrayList<RouteTransport>> getRoutes() {
         return routeList;
     }
-    private Context context;
 
-    private AlertDialog djikstraDialog;
+    private Polyline previousPolyline;;
 
     public void setGraph(GraphTransport graph) {
         this.graph = graph;
@@ -224,8 +227,6 @@ public class MapViewModel extends ViewModel {
                     if (!routeFound) {
                         Log.d("MapViewModel", "No matching route found for the given locations.");
                     }
-
-
                 }
 
                 @Override
@@ -242,4 +243,38 @@ public class MapViewModel extends ViewModel {
             Log.d("MapViewModel", "Graph is null");
         }
     }
+
+    public void handleRouteItemClick(RouteTransport routeTransport , GoogleMap googleMap) {
+
+        if (googleMap == null) {
+            return; // Exit the method if googleMap is null
+        }
+
+        // Remove the previous polyline from the map if it exists
+        if (previousPolyline != null) {
+            previousPolyline.remove();
+        }
+
+        List<PointTransport> path = routeTransport.getPath();
+        if (path != null && path.size() > 0) {
+            PointTransport firstPoint = path.get(0);
+            int color = Color.parseColor(firstPoint.getColorString());
+
+            PolylineOptions polylineOptions = new PolylineOptions()
+                    .color(color)
+                    .width(10f);
+
+            for (PointTransport pointTransport : path) {
+                LatLng latLng = new LatLng(pointTransport.lat(), pointTransport.lng());
+                polylineOptions.add(latLng);
+            }
+
+            Polyline polyline = googleMap.addPolyline(polylineOptions);
+            previousPolyline = polyline;
+
+            routeList.postValue(new ArrayList<>(Collections.singletonList(routeTransport)));
+        }
+    }
+
+
 }
