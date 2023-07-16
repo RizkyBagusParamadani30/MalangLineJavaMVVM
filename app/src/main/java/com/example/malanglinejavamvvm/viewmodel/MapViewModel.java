@@ -11,6 +11,8 @@ import android.graphics.Color;
 import android.location.Location;
 import android.os.Handler;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
@@ -19,6 +21,8 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+
+import com.example.malanglinejavamvvm.R;
 import com.example.malanglinejavamvvm.model.DijkstraTask;
 import com.example.malanglinejavamvvm.model.DijkstraTransport;
 import com.example.malanglinejavamvvm.model.GraphTransport;
@@ -37,9 +41,9 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -170,9 +174,16 @@ public class MapViewModel extends ViewModel {
         }
     }
 
-    public void calculateShortestPathBetweenMarkers(LatLng currentLocation, LatLng destination, int radius) {
+    public void calculateShortestPathBetweenMarkers(Context context,LatLng currentLocation, LatLng destination, int radius) {
         Log.d("MapViewModel", "calculateShortestPathBetweenMarkers called with currentLocation: " + currentLocation + ", destination: " + destination + ", radius: " + radius);
         if (graph != null) {
+            // Inflate the custom layout for the progress dialog
+            View customView = LayoutInflater.from(context).inflate(R.layout.custom_progress_dialog, null);
+            // Create and show the progress dialog
+            AlertDialog dijkstraDialog = new MaterialAlertDialogBuilder(context)
+                    .setView(customView)
+                    .setCancelable(false)
+                    .show();
 
             DijkstraTask.DijkstraTaskListener dijkstraListener = new DijkstraTask.DijkstraTaskListener() {
                 @Override
@@ -227,12 +238,14 @@ public class MapViewModel extends ViewModel {
                     if (!routeFound) {
                         Log.d("MapViewModel", "No matching route found for the given locations.");
                     }
+                    dijkstraDialog.dismiss();
                 }
 
                 @Override
                 public void onDijkstraError(Exception ex) {
                     Log.e("MapViewModel", "Dijkstra Error: ", ex);
                     // Handle any errors during the algorithm calculation
+                    dijkstraDialog.dismiss();
                 }
             };
 
@@ -244,8 +257,7 @@ public class MapViewModel extends ViewModel {
         }
     }
 
-    public void handleRouteItemClick(RouteTransport routeTransport , GoogleMap googleMap) {
-
+    public void handleRouteItemClick(RouteTransport routeTransport, GoogleMap googleMap) {
         if (googleMap == null) {
             return; // Exit the method if googleMap is null
         }
@@ -262,7 +274,7 @@ public class MapViewModel extends ViewModel {
 
             PolylineOptions polylineOptions = new PolylineOptions()
                     .color(color)
-                    .width(10f);
+                    .width(15f);
 
             for (PointTransport pointTransport : path) {
                 LatLng latLng = new LatLng(pointTransport.lat(), pointTransport.lng());
@@ -272,9 +284,10 @@ public class MapViewModel extends ViewModel {
             Polyline polyline = googleMap.addPolyline(polylineOptions);
             previousPolyline = polyline;
 
-            routeList.postValue(new ArrayList<>(Collections.singletonList(routeTransport)));
+            // Set the selected route to be shown in the minimized RecyclerView
+            ArrayList<RouteTransport> selectedRouteList = new ArrayList<>();
+            selectedRouteList.add(routeTransport);
+            routeList.postValue(selectedRouteList);
         }
     }
-
-
 }

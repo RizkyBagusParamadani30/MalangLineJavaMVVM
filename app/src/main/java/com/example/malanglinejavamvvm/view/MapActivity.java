@@ -227,7 +227,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         LatLng currentLocation = currentLocationMarker.getPosition();
         LatLng destination= destinationMarker.getPosition();
         int radius = 500; // Set your desired radius value here
-        viewModel.calculateShortestPathBetweenMarkers(currentLocation, destination,radius);
+        viewModel.calculateShortestPathBetweenMarkers(MapActivity.this,currentLocation, destination,radius);
 
     }
     @Override
