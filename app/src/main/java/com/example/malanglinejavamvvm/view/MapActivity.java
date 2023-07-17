@@ -79,7 +79,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             public void onItemClick(RouteTransport routeTransport) {
 
                 // Show the line corresponding to the clicked routeTransport on the map
-                viewModel.handleRouteItemClick(routeTransport, googleMap, polylines, interchangeMarkers);
+                viewModel.handleRouteItemClick(routeTransport, googleMap, polylines, interchangeMarkers, currentLocationMarker,destinationMarker);
                 recyclerView.setVisibility(View.GONE);
                 isRecyclerViewExpanded = false;
             }
@@ -216,7 +216,5 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         // Stop location updates
         viewModel.stopLocationUpdates();
     }
-
-
 }
 

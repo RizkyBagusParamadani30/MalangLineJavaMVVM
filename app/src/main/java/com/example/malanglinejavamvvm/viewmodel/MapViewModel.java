@@ -57,8 +57,10 @@ public class MapViewModel extends ViewModel {
     private FusedLocationProviderClient fusedLocationProviderClient;
     private LocationRequest locationRequest;
     private LocationCallback locationCallback;
-    private Marker endMarker;
-    private Marker startMarker;
+
+    private Marker startMarker, endMarker;
+
+    private Marker currentLocationMarker,destinationMarker;
 
     public LiveData<LocationModel> getLocation() {
         return location;
@@ -321,9 +323,9 @@ public class MapViewModel extends ViewModel {
     }
 
     private void drawPath(List<PointTransport> path, GoogleMap googleMap, Marker startMarker, Marker endMarker,
-                          List<Polyline> polylines, List<Marker> markers) {
+                          List<Polyline> polylines, List<Marker> markers, Marker currentLocationMarker, Marker destinationMarker) {
         PolylineOptions startWalkingPolylineOptions = MapUtilities.getWalkingPolylineOptions();
-        startWalkingPolylineOptions.add(startMarker.getPosition()).add(endMarker.getPosition());
+        startWalkingPolylineOptions.add(currentLocationMarker.getPosition()).add(startMarker.getPosition());
         polylines.add(googleMap.addPolyline(startWalkingPolylineOptions));
         PolylineOptions polylineOptions = new PolylineOptions().width(15);
         PointTransport prevPoint = null;
@@ -353,13 +355,13 @@ public class MapViewModel extends ViewModel {
         markers.add(MapUtilities.drawInterchangeMarker(googleMap, prevPoint.getLatLng()));
         if (endMarker != null) {
             PolylineOptions endWalkingPolylineOptions = MapUtilities.getWalkingPolylineOptions();
-            endWalkingPolylineOptions.add(endMarker.getPosition()).add(endMarker.getPosition());
+            endWalkingPolylineOptions.add(destinationMarker.getPosition()).add(endMarker.getPosition());
             polylines.add(googleMap.addPolyline(endWalkingPolylineOptions));
         }
     }
 
     public void handleRouteItemClick(RouteTransport routeTransport, GoogleMap googleMap,
-                                     List<Polyline> polylines, List<Marker> interchangeMarkers) {
+                                     List<Polyline> polylines, List<Marker> interchangeMarkers, Marker currentLocationMarker, Marker destinationMarker ) {
         if (googleMap == null || routeTransport == null) {
             return;
         }
@@ -381,7 +383,7 @@ public class MapViewModel extends ViewModel {
         List<PointTransport> path = routeTransport.getPath();
         if (path != null && !path.isEmpty()) {
             // Call the drawPath method passing the required parameters
-            drawPath(path, googleMap, startMarker, endMarker, polylines, interchangeMarkers);
+            drawPath(path, googleMap, startMarker, endMarker, polylines, interchangeMarkers, currentLocationMarker, destinationMarker);
         }
     }
 
