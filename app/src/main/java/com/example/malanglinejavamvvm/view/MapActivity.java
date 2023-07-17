@@ -1,27 +1,21 @@
 package com.example.malanglinejavamvvm.view;
 
-import android.graphics.Color;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.lifecycle.ViewModelStoreOwner;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.malanglinejavamvvm.R;
-import com.example.malanglinejavamvvm.model.GraphTask;
-import com.example.malanglinejavamvvm.model.GraphTransport;
+import com.example.malanglinejavamvvm.databinding.MapActivityBinding;
 import com.example.malanglinejavamvvm.model.Interchange;
 import com.example.malanglinejavamvvm.model.Line;
 import com.example.malanglinejavamvvm.model.LocationModel;
-import com.example.malanglinejavamvvm.model.PointTransport;
 import com.example.malanglinejavamvvm.model.RouteTransport;
 import com.example.malanglinejavamvvm.utilities.MapUtilities;
 import com.example.malanglinejavamvvm.viewmodel.MapViewModel;
@@ -36,11 +30,9 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
-import com.google.android.gms.maps.model.PolylineOptions;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 public class MapActivity extends AppCompatActivity implements OnMapReadyCallback ,GoogleMap.OnMapLongClickListener{
     private GoogleMap googleMap;
@@ -48,22 +40,24 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private Marker currentLocationMarker,destinationMarker;
     private RouteAdapter routeAdapter;
     private RecyclerView recyclerView;
-    private Polyline currentPolyline;
-    private boolean isRecyclerViewExpanded = true;
     private List<Marker> interchangeMarkers = new ArrayList<>();
     private List<Polyline> polylines = new ArrayList<>();
+
+    private MapActivityBinding binding;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.map_activity);
-        LinearLayout cardContainer = findViewById(R.id.card_container);
-        cardContainer.setVisibility(View.GONE);
+        binding = MapActivityBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
+        recyclerView = binding.routeDetail;
+        binding.cardContainer.setVisibility(View.GONE);
 
         // Initialize the ViewModel
         viewModel = new ViewModelProvider(this, new ViewModelFactory(getApplication())).get(MapViewModel.class);
-
+        binding.setViewModel(viewModel); // mengatur View model untuk data binding
+        binding.setLifecycleOwner(this);
 
         viewModel.getLocation().observe(this, new Observer<LocationModel>() {
             @Override
@@ -72,43 +66,31 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 moveCameraToLocation(locationModel.getLatLng());
             }
         });
-
-        // Initialize the routeAdapter and set it to the RecyclerView
-        routeAdapter = new RouteAdapter(new ArrayList<>(), new RouteAdapter.RouteAdapterItemClickListener() {
-            @Override
-            public void onItemClick(RouteTransport routeTransport) {
-
-                // Show the line corresponding to the clicked routeTransport on the map
-                viewModel.handleRouteItemClick(routeTransport, googleMap, polylines, interchangeMarkers, currentLocationMarker,destinationMarker);
-                recyclerView.setVisibility(View.GONE);
-                isRecyclerViewExpanded = false;
-            }
+        // mengatur recyclerview dengan data binding
+        routeAdapter = new RouteAdapter(new ArrayList<>(), routeTransport -> {
+            viewModel.handleRouteItemClick(routeTransport, googleMap, polylines, interchangeMarkers, currentLocationMarker, destinationMarker);
+            binding.cardContainer.setVisibility(View.GONE);
         });
-        this.recyclerView = findViewById(R.id.route_detail_container);
-        this.recyclerView.setAdapter(routeAdapter);
-        this.recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        binding.routeDetail.setAdapter(routeAdapter);
+        binding.routeDetail.setLayoutManager(new LinearLayoutManager(this));
+
+
         viewModel.getRoutes().observe(this, new Observer<List<RouteTransport>>() {
             @Override
             public void onChanged(List<RouteTransport> routes) {
-                // Update the route list in the adapter
+                // update rute yang ada di adapter
                 routeAdapter.setRoutes((ArrayList<RouteTransport>) routes);
             }
         });
 
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         assert mapFragment != null;
         mapFragment.getMapAsync(this);
-
-
     }
 
     @Override
     public void onMapReady(GoogleMap map) {
         googleMap = map;
-
-        //View polyline in google maps
-        viewModel.bindPolylineToMap(googleMap);
 
         // Start location updates
         viewModel.startLocationUpdates(this);
@@ -118,6 +100,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         // Parse the JSON data and update the ViewModel
         viewModel.AmbilPoints(getApplicationContext(), googleMap);
+
 
         // Observe the lines and interchanges data in the ViewModel
         viewModel.getLines().observe(this, new Observer<List<Line>>() {
@@ -139,6 +122,14 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 }
             }
         });
+       googleMap.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
+            @Override
+            public void onInfoWindowClick(Marker marker) {
+                if (marker.equals(destinationMarker)) {
+                    binding.cardContainer.setVisibility(View.VISIBLE);
+                }
+            }
+        });
 
     }
 
@@ -153,8 +144,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         }
     }
 
-
-
     private void moveCameraToLocation(LatLng latLng) {
         CameraPosition cameraPosition = new CameraPosition.Builder()
                 .target(latLng)
@@ -162,57 +151,35 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 .build();
         googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
     }
-
-
     public void onMapLongClick(LatLng latilongi){
+        LinearLayout cardContainer = binding.cardContainer;
+        cardContainer.setVisibility(View.VISIBLE);
+
+        for (Polyline polyline : polylines) {
+            polyline.remove();
+        }
+        polylines.clear();
+
         if (viewModel.getGraph() == null) {
             Toast.makeText(this, "Graph is not ready yet.", Toast.LENGTH_SHORT).show();
             return;
         }
-
         if (destinationMarker  != null ){
+            cardContainer.setVisibility(View.GONE);
             destinationMarker.remove();
             destinationMarker = null;
         }
-
-       viewModel.removePolyline();
-
-
-
         this.destinationMarker = MapUtilities.drawMarker(
                 this.googleMap, latilongi, BitmapDescriptorFactory.HUE_GREEN, "Destination", "Tap to show route\nto this location");
-
-        // Show the card_container
-        LinearLayout cardContainer = findViewById(R.id.card_container);
-        cardContainer.setVisibility(View.VISIBLE);
-
-        // Handle the click on the card_container
-        cardContainer.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Handle the click action here, e.g., expand/collapse the RecyclerView
-                if (isRecyclerViewExpanded) {
-                    recyclerView.setVisibility(View.GONE);
-                    isRecyclerViewExpanded = false;
-                } else {
-                    recyclerView.setVisibility(View.VISIBLE);
-                    isRecyclerViewExpanded = true;
-                }
-            }
-        });
 
         LatLng currentLocation = currentLocationMarker.getPosition();
         LatLng destination= destinationMarker.getPosition();
         int radius = 500; // Set your desired radius value here
         viewModel.calculateShortestPathBetweenMarkers(MapActivity.this,currentLocation, destination,radius);
-
     }
-
-
     @Override
     protected void onStop() {
         super.onStop();
-
         // Stop location updates
         viewModel.stopLocationUpdates();
     }

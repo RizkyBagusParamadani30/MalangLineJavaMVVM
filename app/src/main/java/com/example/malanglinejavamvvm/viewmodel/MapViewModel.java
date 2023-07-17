@@ -58,10 +58,6 @@ public class MapViewModel extends ViewModel {
     private LocationRequest locationRequest;
     private LocationCallback locationCallback;
 
-    private Marker startMarker, endMarker;
-
-    private Marker currentLocationMarker,destinationMarker;
-
     public LiveData<LocationModel> getLocation() {
         return location;
     }
@@ -69,9 +65,6 @@ public class MapViewModel extends ViewModel {
     public void setLocation(LocationModel LocationModel) {
         location.setValue(LocationModel);
     }
-
-    private GoogleMap googleMap;
-    private final List<PolylineOptions> polylineOptionsList = new ArrayList<>();
     private MutableLiveData<List<Line>> lineList = new MutableLiveData<>();
 
     public LiveData<List<Line>> getLines() {
@@ -98,14 +91,6 @@ public class MapViewModel extends ViewModel {
 
     public LiveData<ArrayList<RouteTransport>> getRoutes() {
         return routeList;
-    }
-
-    private Polyline previousPolyline;
-    ;
-
-    public void setGraph(GraphTransport graph) {
-        this.graph = graph;
-        graphLivaData.setValue(graph);
     }
 
     private ArrayList<RouteTransport> routesList = new ArrayList<>();
@@ -178,37 +163,6 @@ public class MapViewModel extends ViewModel {
             }
         });
     }
-
-    public void bindPolylineToMap(GoogleMap googleMap) {
-        List<Line> lines = lineList.getValue();
-
-        if (lines != null && googleMap != null) {
-            for (Line line : lines) {
-                PolylineOptions polylineOptions = new PolylineOptions()
-                        .color(line.color)
-                        .width(10f);
-
-                LinkedList<PointTransport> path = line.path;
-                if (path != null) {
-                    for (PointTransport pointTransport : path) {
-                        LatLng latLng = new LatLng(pointTransport.lat, pointTransport.lng);
-                        polylineOptions.add(latLng);
-                    }
-
-                    // Add the polyline to the map
-                    googleMap.addPolyline(polylineOptions);
-                }
-            }
-        }
-    }
-
-    public void removePolyline() {
-        if (previousPolyline != null) {
-            previousPolyline.remove();
-            previousPolyline = null;
-        }
-    }
-
     public void calculateShortestPathBetweenMarkers(Context context, LatLng currentLocation, LatLng destination, int radius) {
         Log.d("MapViewModel", "calculateShortestPathBetweenMarkers called with currentLocation: " + currentLocation + ", destination: " + destination + ", radius: " + radius);
         if (graph != null) {
@@ -359,7 +313,6 @@ public class MapViewModel extends ViewModel {
             polylines.add(googleMap.addPolyline(endWalkingPolylineOptions));
         }
     }
-
     public void handleRouteItemClick(RouteTransport routeTransport, GoogleMap googleMap,
                                      List<Polyline> polylines, List<Marker> interchangeMarkers, Marker currentLocationMarker, Marker destinationMarker ) {
         if (googleMap == null || routeTransport == null) {
@@ -373,9 +326,13 @@ public class MapViewModel extends ViewModel {
             return;
         }
 
-        // Remove any existing markers before adding new ones
-        removeMarkers();
-
+        // Remove existing polylines
+        if (polylines != null) {
+            for (Polyline line : polylines) {
+                line.remove();
+            }
+            polylines.clear();
+        }
         // Draw start and end markers
         Marker startMarker = MapUtilities.drawInterchangeMarker(googleMap, startLatLng);
         Marker endMarker = MapUtilities.drawInterchangeMarker(googleMap, endLatLng);
@@ -385,24 +342,5 @@ public class MapViewModel extends ViewModel {
             // Call the drawPath method passing the required parameters
             drawPath(path, googleMap, startMarker, endMarker, polylines, interchangeMarkers, currentLocationMarker, destinationMarker);
         }
-    }
-
-    private void removeMarkers() {
-        // Clear any existing markers
-        if (startMarker != null) {
-            startMarker.remove();
-            startMarker = null;
-        }
-        if (endMarker != null) {
-            endMarker.remove();
-            endMarker = null;
-        }
-    }
-
-    private void clearInterchangeMarkers(List<Marker> interchangeMarkers) {
-        for (Marker marker : interchangeMarkers) {
-            marker.remove();
-        }
-        interchangeMarkers.clear();
     }
 }
