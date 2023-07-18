@@ -10,6 +10,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -33,6 +34,7 @@ import com.example.malanglinejavamvvm.model.Line;
 import com.example.malanglinejavamvvm.model.LocationModel;
 import com.example.malanglinejavamvvm.model.PointTransport;
 import com.example.malanglinejavamvvm.model.RouteTransport;
+import com.example.malanglinejavamvvm.utilities.CDM;
 import com.example.malanglinejavamvvm.utilities.MapUtilities;
 import com.example.malanglinejavamvvm.utilities.Service;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -163,8 +165,8 @@ public class MapViewModel extends ViewModel {
             }
         });
     }
-    public void calculateShortestPathBetweenMarkers(Context context, LatLng currentLocation, LatLng destination, int radius) {
-        Log.d("MapViewModel", "calculateShortestPathBetweenMarkers called with currentLocation: " + currentLocation + ", destination: " + destination + ", radius: " + radius);
+    public void calculateShortestPathBetweenMarkers(Context context, LatLng currentLocation, LatLng destination) {
+        Log.d("MapViewModel", "calculateShortestPathBetweenMarkers called with currentLocation: " + currentLocation + ", destination: " + destination);
         if (graph != null) {
             // Inflate the custom layout for the progress dialog
             View customView = LayoutInflater.from(context).inflate(R.layout.custom_progress_dialog, null);
@@ -240,15 +242,18 @@ public class MapViewModel extends ViewModel {
                 }
             };
 
+            DijkstraTransport.Priority priority = PreferenceManager.getDefaultSharedPreferences(context)
+                    .getBoolean("pref_priority", true) ?
+                    DijkstraTransport.Priority.COST :
+                    DijkstraTransport.Priority.DISTANCE;
+
             DijkstraTask dijkstraTask = new DijkstraTask(graph, currentLocation, destination,
-                    DijkstraTransport.Priority.COST, DijkstraTransport.Priority.DISTANCE, radius, dijkstraListener);
+                   priority,CDM.getDistance(context), dijkstraListener);
             dijkstraTask.execute();
         } else {
             Log.d("MapViewModel", "Graph is null");
         }
     }
-
-
     public void loadGraph() {
         // Obtain the lines and interchanges from the ViewModel
         List<Line> lines = getLines().getValue();
@@ -262,7 +267,6 @@ public class MapViewModel extends ViewModel {
             graphTask.execute();
         }
     }
-
     public void handleGraph(Set<PointTransport> points) {
         if (points != null && !points.isEmpty()) {
             // Graph is ready
@@ -333,6 +337,7 @@ public class MapViewModel extends ViewModel {
             }
             polylines.clear();
         }
+
         // Draw start and end markers
         Marker startMarker = MapUtilities.drawInterchangeMarker(googleMap, startLatLng);
         Marker endMarker = MapUtilities.drawInterchangeMarker(googleMap, endLatLng);

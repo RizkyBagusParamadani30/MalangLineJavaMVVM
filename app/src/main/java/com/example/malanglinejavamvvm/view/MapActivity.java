@@ -1,6 +1,10 @@
 package com.example.malanglinejavamvvm.view;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.Toast;
@@ -12,11 +16,13 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.malanglinejavamvvm.R;
+import com.example.malanglinejavamvvm.SettingsActivity;
 import com.example.malanglinejavamvvm.databinding.MapActivityBinding;
 import com.example.malanglinejavamvvm.model.Interchange;
 import com.example.malanglinejavamvvm.model.Line;
 import com.example.malanglinejavamvvm.model.LocationModel;
 import com.example.malanglinejavamvvm.model.RouteTransport;
+import com.example.malanglinejavamvvm.utilities.CDM;
 import com.example.malanglinejavamvvm.utilities.MapUtilities;
 import com.example.malanglinejavamvvm.viewmodel.MapViewModel;
 import com.example.malanglinejavamvvm.viewmodel.ViewModelFactory;
@@ -49,12 +55,18 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
+
+        CDM.cost = Double.parseDouble(
+                PreferenceManager.getDefaultSharedPreferences(this)
+                        .getString("pref_cost", String.valueOf(CDM.cost)));
+
         binding = MapActivityBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         recyclerView = binding.routeDetail;
         binding.cardContainer.setVisibility(View.GONE);
 
-        // Initialize the ViewModel
+        // Inisialisasi viewModel
         viewModel = new ViewModelProvider(this, new ViewModelFactory(getApplication())).get(MapViewModel.class);
         binding.setViewModel(viewModel); // mengatur View model untuk data binding
         binding.setLifecycleOwner(this);
@@ -87,7 +99,16 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         assert mapFragment != null;
         mapFragment.getMapAsync(this);
     }
+    public boolean onCreateOptionsMenu(Menu menu) {
+        this.getMenuInflater().inflate(R.menu.action_menu, menu);
+        return true;
+    }
 
+    public boolean onOptionsItemSelected(MenuItem item) {
+        Intent i = new Intent(this, SettingsActivity.class);
+        this.startActivity(i);
+        return true;
+    }
     @Override
     public void onMapReady(GoogleMap map) {
         googleMap = map;
@@ -101,17 +122,16 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         // Parse the JSON data and update the ViewModel
         viewModel.AmbilPoints(getApplicationContext(), googleMap);
 
-
-        // Observe the lines and interchanges data in the ViewModel
-        viewModel.getLines().observe(this, new Observer<List<Line>>() {
-            @Override
-            public void onChanged(List<Line> lines) {
-                // Check if both lines and interchanges data is available
-                if (lines != null && viewModel.getInterchanges().getValue() != null) {
-                    viewModel.loadGraph();
-                }
-            }
-        });
+//        // Observe the lines and interchanges data in the ViewModel
+//        viewModel.getLines().observe(this, new Observer<List<Line>>() {
+//            @Override
+//            public void onChanged(List<Line> lines) {
+//                // Check if both lines and interchanges data is available
+//                if (lines != null && viewModel.getInterchanges().getValue() != null) {
+//                    viewModel.loadGraph();
+//                }
+//            }
+//        });
 
         viewModel.getInterchanges().observe(this, new Observer<List<Interchange>>() {
             @Override
@@ -132,7 +152,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         });
 
     }
-
     private void updateCurrentLocationMarker(LatLng latLng) {
         if (currentLocationMarker == null) {
             MarkerOptions markerOptions = new MarkerOptions()
@@ -143,7 +162,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             currentLocationMarker.setPosition(latLng);
         }
     }
-
     private void moveCameraToLocation(LatLng latLng) {
         CameraPosition cameraPosition = new CameraPosition.Builder()
                 .target(latLng)
@@ -174,8 +192,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         LatLng currentLocation = currentLocationMarker.getPosition();
         LatLng destination= destinationMarker.getPosition();
-        int radius = 500; // Set your desired radius value here
-        viewModel.calculateShortestPathBetweenMarkers(MapActivity.this,currentLocation, destination,radius);
+        viewModel.calculateShortestPathBetweenMarkers(MapActivity.this,currentLocation, destination);
     }
     @Override
     protected void onStop() {

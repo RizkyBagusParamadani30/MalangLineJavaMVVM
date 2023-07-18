@@ -47,12 +47,12 @@
                 android:orientation="horizontal"
                 >
 
-                <include layout="@layout/item_route_selected"
-                    android:id="@+id/selected_route"
-                    android:layout_width="0dp"
-                    android:layout_weight="1"
-                    android:layout_height="wrap_content"
-                    />
+<!--                <include layout="@layout/item_route_selected"-->
+<!--                    android:id="@+id/selected_route"-->
+<!--                    android:layout_width="0dp"-->
+<!--                    android:layout_weight="1"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    />-->
 
                 <View
                     android:layout_width="1dp"
