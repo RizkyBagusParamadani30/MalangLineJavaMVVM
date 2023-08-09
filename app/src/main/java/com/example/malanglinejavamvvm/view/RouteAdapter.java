@@ -12,12 +12,10 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.malanglinejavamvvm.R;
-import com.example.malanglinejavamvvm.model.PointTransport;
 import com.example.malanglinejavamvvm.model.RouteTransport;
 import com.example.malanglinejavamvvm.utilities.Helper;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Locale;
 
 
@@ -87,6 +85,7 @@ public class RouteAdapter extends RecyclerView.Adapter<RouteAdapter.ViewHolder> 
     public int getItemCount() {
         return this.routes.size();
     }
+
     @SuppressLint("NotifyDataSetChanged")
     public void setRoutes(ArrayList<RouteTransport> routes) {
         this.routes = routes;
@@ -97,7 +96,6 @@ public class RouteAdapter extends RecyclerView.Adapter<RouteAdapter.ViewHolder> 
     public ArrayList<RouteTransport> getRoutes() {
         return routes;
     }
-
 
 
 }

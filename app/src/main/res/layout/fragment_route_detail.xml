@@ -17,12 +17,13 @@
         android:visibility="gone"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
-        <include layout="@layout/item_route_selected"
+
+        <include
+            layout="@layout/item_route_selected"
             android:id="@+id/selected_route"
             android:layout_width="0dp"
             android:layout_weight="1"
-            android:layout_height="wrap_content"
-            />
+            android:layout_height="wrap_content" />
 
         <View
             android:layout_width="1dp"
@@ -31,8 +32,7 @@
             android:layout_marginLeft="4dp"
             android:layout_marginRight="8dp"
             android:layout_marginTop="8dp"
-            android:layout_marginBottom="8dp"
-            />
+            android:layout_marginBottom="8dp" />
 
         <ImageView
             android:layout_width="wrap_content"
@@ -49,8 +49,7 @@
         android:id="@+id/rvItinerary"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="12dp">
-    </TextView>
+        android:layout_marginBottom="12dp"></TextView>
 
     <!--
     <include

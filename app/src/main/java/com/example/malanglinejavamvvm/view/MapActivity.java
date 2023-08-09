@@ -2,6 +2,7 @@ package com.example.malanglinejavamvvm.view;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Trace;
 import android.preference.PreferenceManager;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -16,10 +17,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.malanglinejavamvvm.R;
-import com.example.malanglinejavamvvm.SettingsActivity;
 import com.example.malanglinejavamvvm.databinding.MapActivityBinding;
 import com.example.malanglinejavamvvm.model.Interchange;
-import com.example.malanglinejavamvvm.model.Line;
 import com.example.malanglinejavamvvm.model.LocationModel;
 import com.example.malanglinejavamvvm.model.RouteTransport;
 import com.example.malanglinejavamvvm.utilities.CDM;
@@ -40,16 +39,18 @@ import com.google.android.gms.maps.model.Polyline;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MapActivity extends AppCompatActivity implements OnMapReadyCallback ,GoogleMap.OnMapLongClickListener{
+public class MapActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMapLongClickListener {
     private GoogleMap googleMap;
     private MapViewModel viewModel;
-    private Marker currentLocationMarker,destinationMarker;
+    private Marker currentLocationMarker, destinationMarker;
     private RouteAdapter routeAdapter;
     private RecyclerView recyclerView;
     private List<Marker> interchangeMarkers = new ArrayList<>();
     private List<Polyline> polylines = new ArrayList<>();
 
     private MapActivityBinding binding;
+
+
 
 
     @Override
@@ -99,6 +100,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         assert mapFragment != null;
         mapFragment.getMapAsync(this);
     }
+
     public boolean onCreateOptionsMenu(Menu menu) {
         this.getMenuInflater().inflate(R.menu.action_menu, menu);
         return true;
@@ -109,6 +111,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         this.startActivity(i);
         return true;
     }
+
     @Override
     public void onMapReady(GoogleMap map) {
         googleMap = map;
@@ -142,7 +145,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 }
             }
         });
-       googleMap.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
+        googleMap.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
             @Override
             public void onInfoWindowClick(Marker marker) {
                 if (marker.equals(destinationMarker)) {
@@ -152,6 +155,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         });
 
     }
+
     private void updateCurrentLocationMarker(LatLng latLng) {
         if (currentLocationMarker == null) {
             MarkerOptions markerOptions = new MarkerOptions()
@@ -162,14 +166,16 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             currentLocationMarker.setPosition(latLng);
         }
     }
+
     private void moveCameraToLocation(LatLng latLng) {
         CameraPosition cameraPosition = new CameraPosition.Builder()
                 .target(latLng)
-                .zoom(15f)
+                .zoom(13f)
                 .build();
         googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
     }
-    public void onMapLongClick(LatLng latilongi){
+
+    public void onMapLongClick(LatLng latilongi) {
         LinearLayout cardContainer = binding.cardContainer;
         cardContainer.setVisibility(View.VISIBLE);
 
@@ -182,7 +188,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             Toast.makeText(this, "Graph is not ready yet.", Toast.LENGTH_SHORT).show();
             return;
         }
-        if (destinationMarker  != null ){
+        if (destinationMarker != null) {
             cardContainer.setVisibility(View.GONE);
             destinationMarker.remove();
             destinationMarker = null;
@@ -191,9 +197,10 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 this.googleMap, latilongi, BitmapDescriptorFactory.HUE_GREEN, "Destination", "Tap to show route\nto this location");
 
         LatLng currentLocation = currentLocationMarker.getPosition();
-        LatLng destination= destinationMarker.getPosition();
-        viewModel.calculateShortestPathBetweenMarkers(MapActivity.this,currentLocation, destination);
+        LatLng destination = destinationMarker.getPosition();
+        viewModel.calculateShortestPathBetweenMarkers(MapActivity.this, currentLocation, destination);
     }
+
     @Override
     protected void onStop() {
         super.onStop();

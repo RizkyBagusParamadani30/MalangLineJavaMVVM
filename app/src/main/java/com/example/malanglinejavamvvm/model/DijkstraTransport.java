@@ -7,7 +7,7 @@ import java.util.Set;
 
 public class DijkstraTransport {
 
-    public enum Priority{
+    public enum Priority {
         COST,
         DISTANCE
     }
@@ -21,7 +21,7 @@ public class DijkstraTransport {
 
     public void calculateShortestPathFrom(PointTransport source, Priority priority) {
 
-        source.setCost(0D,0D);
+        source.setCost(0D, 0D);
 
         Set<PointTransport> settledPoints = new HashSet<>();
         Set<PointTransport> unsettledPoints = new HashSet<>();
@@ -29,13 +29,13 @@ public class DijkstraTransport {
         PointTransport currentPoint;
         while (unsettledPoints.size() != 0) {
 
-            if(priority == Priority.COST)
+            if (priority == Priority.COST)
                 currentPoint = getLowestPricePoint(unsettledPoints);
             else currentPoint = getLowestDistancePoint(unsettledPoints);
 
             unsettledPoints.remove(currentPoint);
 
-            for (Map.Entry<PointTransport, PointTransport.TransportCost> adjacencyPair:
+            for (Map.Entry<PointTransport, PointTransport.TransportCost> adjacencyPair :
                     currentPoint.getAdjacentTransportPoints().entrySet()) {
                 PointTransport adjacentPoint = adjacencyPair.getKey();
                 PointTransport.TransportCost edgeWeight = adjacencyPair.getValue();
@@ -53,7 +53,7 @@ public class DijkstraTransport {
     private static PointTransport getLowestPricePoint(Set<PointTransport> unsettledPoints) {
         PointTransport lowestCostPoint = null;
         PointTransport.TransportCost lowestCost = new PointTransport.TransportCost();
-        for (PointTransport point: unsettledPoints) {
+        for (PointTransport point : unsettledPoints) {
             PointTransport.TransportCost pointCost = point.getCost();
             if (pointCost.price < lowestCost.price) {
                 lowestCost = pointCost;
@@ -66,7 +66,7 @@ public class DijkstraTransport {
     private static PointTransport getLowestDistancePoint(Set<PointTransport> unsettledPoints) {
         PointTransport lowestDistancePoint = null;
         PointTransport.TransportCost lowestDistance = new PointTransport.TransportCost();
-        for (PointTransport point: unsettledPoints) {
+        for (PointTransport point : unsettledPoints) {
             PointTransport.TransportCost pointDistance = point.getCost();
             if (pointDistance.distance < lowestDistance.distance) {
                 lowestDistance = pointDistance;
@@ -89,7 +89,7 @@ public class DijkstraTransport {
     }
 
     private static void calculateMinimumPrice(PointTransport evaluationPoint,
-                                             PointTransport.TransportCost edgeCost, PointTransport sourcePoint) {
+                                              PointTransport.TransportCost edgeCost, PointTransport sourcePoint) {
         PointTransport.TransportCost sourceCost = sourcePoint.getCost();
         if (sourceCost.price + edgeCost.price < evaluationPoint.getCost().price) {
             evaluationPoint.setPrice(sourceCost.price + edgeCost.price);

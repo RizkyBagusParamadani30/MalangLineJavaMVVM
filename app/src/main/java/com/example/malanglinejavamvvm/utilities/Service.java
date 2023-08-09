@@ -24,6 +24,7 @@ public class Service {
 
     public interface IServiceInterface {
         void onPointsObtained(ArrayList<Line> lines, ArrayList<Interchange> interchanges);
+
         void onPointsRequestError(String error);
     }
 
@@ -38,7 +39,7 @@ public class Service {
 
             ArrayList<Line> lines = new ArrayList<>();
 
-            for(int i=0; i<linesJson.length();i++) {
+            for (int i = 0; i < linesJson.length(); i++) {
                 JSONObject lineJson = linesJson.getJSONObject(i);
                 /* "idline": "1", "name": "AL", "direction": "O", "color": "#FF0000", "path": [] */
                 Line line = new Line();
@@ -51,7 +52,7 @@ public class Service {
 
                 LinkedList<PointTransport> path = new LinkedList<>();
 
-                for(int j = 0; j<pathJson.length(); j++) {
+                for (int j = 0; j < pathJson.length(); j++) {
                     JSONObject pointJson = pathJson.getJSONObject(j);
                     /*
                         String id, double lat, double lng, boolean stop, int idLine,
@@ -66,7 +67,7 @@ public class Service {
                             line.id,
                             line.name,
                             line.direction,
-                            "#"+Integer.toHexString(line.color),
+                            "#" + Integer.toHexString(line.color),
                             Integer.valueOf(pointJson.getString("sequence")),
                             null,
                             null
@@ -82,7 +83,7 @@ public class Service {
 
             JSONArray interchangesJson = response.getJSONArray("interchanges");
 
-            for(int i = 0; i<interchangesJson.length(); i++) {
+            for (int i = 0; i < interchangesJson.length(); i++) {
 
                 JSONObject interchangeJson = interchangesJson.getJSONObject(i);
 
@@ -94,7 +95,7 @@ public class Service {
 
                 JSONArray pointsJson = interchangeJson.getJSONArray("points");
 
-                for(int j=0; j<pointsJson.length(); j++) {
+                for (int j = 0; j < pointsJson.length(); j++) {
                     JSONObject pointJson = pointsJson.getJSONObject(j);
                     PointTransport point = new PointTransport();
                     /*
@@ -113,11 +114,11 @@ public class Service {
 
             }
 
-            if(callback!=null)
+            if (callback != null)
                 callback.onPointsObtained(lines, interchanges);
         } catch (JSONException e) {
             e.printStackTrace();
-            if(callback!= null)
+            if (callback != null)
                 callback.onPointsRequestError(e.getMessage());
         }
 

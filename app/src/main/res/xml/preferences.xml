@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-    <PreferenceCategory
-        android:title="Application Settings"
-        >
+    <PreferenceCategory android:title="Application Settings">
         <EditTextPreference
             android:title="Walking Distance to Stops"
             android:key="pref_walkingDistance"
@@ -22,21 +20,18 @@
             android:defaultValue="true" />
 
     </PreferenceCategory>
-    <PreferenceCategory
-        android:title="System Settings">
+    <PreferenceCategory android:title="System Settings">
         <EditTextPreference
             android:title="API Path"
             android:key="pref_basepath"
             android:defaultValue="@string/default_api_path"
             android:summary="Server API base path" />
     </PreferenceCategory>
-    <PreferenceCategory
-        android:title="Updates"
-        >
-        <CheckBoxPreference android:title="Application Updates"
+    <PreferenceCategory android:title="Updates">
+        <CheckBoxPreference
+            android:title="Application Updates"
             android:key="applicationUpdates"
             android:defaultValue="false"
-            android:summary="This option if selected will allow the application to check for latest versions."
-             />
+            android:summary="This option if selected will allow the application to check for latest versions." />
     </PreferenceCategory>
 </PreferenceScreen>

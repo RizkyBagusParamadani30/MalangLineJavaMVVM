@@ -28,7 +28,7 @@ public class GraphTask extends AsyncTask<Object, Object, Set<PointTransport>> {
 
     @Override
     protected void onPostExecute(Set<PointTransport> points) {
-        if(this.listener != null)
+        if (this.listener != null)
             this.listener.onGraphGenerated(points);
         super.onPostExecute(points);
     }

@@ -7,8 +7,6 @@ import com.google.android.gms.maps.model.LatLng;
 
 import java.util.Locale;
 
-import com.example.malanglinejavamvvm.model.PointTransport;
-
 public class Helper {
 
     public static double calculateDistance(PointTransport a, PointTransport b) {
@@ -28,8 +26,8 @@ public class Helper {
         int unit = 1000;
         if (distance < unit) return String.format(Locale.getDefault(), "%.1f", distance) + " m";
         int exp = (int) (Math.log(distance) / Math.log(unit));
-        String pre = "kMGTPE".charAt(exp-1) + "";
-        return String.format(Locale.getDefault(),"%.1f %sm", distance / Math.pow(unit, exp), pre);
+        String pre = "kMGTPE".charAt(exp - 1) + "";
+        return String.format(Locale.getDefault(), "%.1f %sm", distance / Math.pow(unit, exp), pre);
     }
 
     public static int toDp(int px) {

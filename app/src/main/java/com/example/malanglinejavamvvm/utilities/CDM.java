@@ -8,10 +8,13 @@ public class CDM {
     public static double cost = 4000D;
 
 
+    public static Double getStandardCost() {
+        return CDM.cost;
+    }
 
-    public static Double getStandardCost() { return CDM.cost; }
-
-    public static Double oneMeterInDegree() { return 0.00000898448D; }
+    public static Double oneMeterInDegree() {
+        return 0.00000898448D;
+    }
 
     public static int getStandardDistance() {
         return 400;

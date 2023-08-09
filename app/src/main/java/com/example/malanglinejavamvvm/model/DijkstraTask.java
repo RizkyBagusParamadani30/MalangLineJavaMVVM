@@ -46,7 +46,7 @@ public class DijkstraTask extends AsyncTask<Void, DijkstraTask.DijkstraReport, A
             ArrayList<RouteTransport> routeTransports = new ArrayList<>();
 
             this.report.progress = 0;
-            for(PointTransport source: sources) {
+            for (PointTransport source : sources) {
 
                 for (PointTransport destination : destinations) {
 
@@ -79,8 +79,8 @@ public class DijkstraTask extends AsyncTask<Void, DijkstraTask.DijkstraReport, A
 
             return routeTransports;
 
-        } catch(Exception ex) {
-            if(this.listener != null) this.listener.onDijkstraError(ex);
+        } catch (Exception ex) {
+            if (this.listener != null) this.listener.onDijkstraError(ex);
         }
 
         return null;
@@ -89,18 +89,20 @@ public class DijkstraTask extends AsyncTask<Void, DijkstraTask.DijkstraReport, A
     @Override
     protected void onProgressUpdate(DijkstraReport... values) {
         super.onProgressUpdate(values);
-        if(this.listener != null) this.listener.onDijkstraProgress(values[0]);
+        if (this.listener != null) this.listener.onDijkstraProgress(values[0]);
     }
 
     @Override
     protected void onPostExecute(ArrayList<RouteTransport> routeTransports) {
         super.onPostExecute(routeTransports);
-        if(this.listener != null) this.listener.onDijkstraComplete(routeTransports);
+        if (this.listener != null) this.listener.onDijkstraComplete(routeTransports);
     }
 
     public interface DijkstraTaskListener {
         void onDijkstraProgress(DijkstraReport report);
+
         void onDijkstraComplete(ArrayList<RouteTransport> routes);
+
         void onDijkstraError(Exception ex);
     }
 

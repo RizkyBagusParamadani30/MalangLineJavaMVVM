@@ -9,7 +9,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 
-
 public class GraphTransport {
     private Set<PointTransport> pointTransports;
 
@@ -17,18 +16,18 @@ public class GraphTransport {
         this.pointTransports = transportPoints;
     }
 
-    public Set<PointTransport> getPointTransports(){
+    public Set<PointTransport> getPointTransports() {
         return this.pointTransports;
     }
 
     @Deprecated
     public PointTransport getNearby(Double latitude, Double longitude) {
-        if(this.pointTransports == null) return null;
+        if (this.pointTransports == null) return null;
         Double minDistance = Double.MAX_VALUE;
         PointTransport nearestPoint = null;
-            for (PointTransport point: this.pointTransports) {
+        for (PointTransport point : this.pointTransports) {
             Double distance = Helper.calculateDistance(point, latitude, longitude);
-            if(distance < minDistance) {
+            if (distance < minDistance) {
                 minDistance = distance;
                 nearestPoint = point;
             }
@@ -79,8 +78,8 @@ public class GraphTransport {
 
         for (PointTransport pointTransport : points) {
             String adjacentPointId = pointTransport.getAdjacentPointId();
-            for(PointTransport nextPointTransport : points) {
-                if(adjacentPointId != null && adjacentPointId.equals(nextPointTransport.getId())) {
+            for (PointTransport nextPointTransport : points) {
+                if (adjacentPointId != null && adjacentPointId.equals(nextPointTransport.getId())) {
                     Double distance = Helper.calculateDistance(pointTransport, nextPointTransport);
                     PointTransport.TransportCost cost = new PointTransport.TransportCost(0D, distance);
                     pointTransport.addDestination(nextPointTransport, cost);
@@ -89,9 +88,9 @@ public class GraphTransport {
             }
 
             String[] nextInterchangePoints = pointTransport.getInterchanges();
-            if(nextInterchangePoints != null) {
-                for(String nextInterchangePoint: nextInterchangePoints) {
-                    for(PointTransport nextPointInterchange : points) {
+            if (nextInterchangePoints != null) {
+                for (String nextInterchangePoint : nextInterchangePoints) {
+                    for (PointTransport nextPointInterchange : points) {
                         if (nextInterchangePoint != null && nextInterchangePoint.equals(nextPointInterchange.getId())) {
                             PointTransport.TransportCost cost = new PointTransport.TransportCost(CDM.getStandardCost(), 0D);
                             pointTransport.addDestination(nextPointInterchange, cost);
@@ -111,11 +110,11 @@ public class GraphTransport {
 
         Set<PointTransport> pointSets = new HashSet<>();
 
-        for(Line line: lines) {
+        for (Line line : lines) {
 
             PointTransport prevPoint = null;
-            for(PointTransport point : line.path) {
-                if(prevPoint == null) {
+            for (PointTransport point : line.path) {
+                if (prevPoint == null) {
                     prevPoint = point;
                     continue;
                 } else {
@@ -131,7 +130,7 @@ public class GraphTransport {
         }
 
         // assign points to interchange...
-        for(Interchange interchange: interchanges) {
+        for (Interchange interchange : interchanges) {
             for (PointTransport point : pointSets) {
                 for (String pointId : interchange.pointIds) {
                     if (point.id.equals(pointId))
@@ -140,10 +139,10 @@ public class GraphTransport {
             }
         }
 
-        for(Interchange interchange: interchanges) {
-            for(PointTransport sPoint : interchange.points) {
-                for(PointTransport dPoint: interchange.points) {
-                    if(sPoint.id.equals(dPoint.id)) continue;
+        for (Interchange interchange : interchanges) {
+            for (PointTransport sPoint : interchange.points) {
+                for (PointTransport dPoint : interchange.points) {
+                    if (sPoint.id.equals(dPoint.id)) continue;
                     PointTransport.TransportCost cost =
                             new PointTransport.TransportCost(
                                     CDM.getStandardCost(),

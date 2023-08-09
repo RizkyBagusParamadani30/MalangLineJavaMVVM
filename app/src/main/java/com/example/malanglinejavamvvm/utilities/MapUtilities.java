@@ -62,7 +62,7 @@ public class MapUtilities {
         PolylineOptions polylineOptions = new PolylineOptions()
                 .color(color)
                 .width(7f);
-        for(PointTransport point: line) {
+        for (PointTransport point : line) {
             polylineOptions.add(point.getLatLng());
         }
         return map.addPolyline(polylineOptions);

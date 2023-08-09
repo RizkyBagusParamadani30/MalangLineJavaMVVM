@@ -32,11 +32,11 @@ public class RouteTransport {
         this.lineCodes = new ArrayList<>();
         this.colorCodes = new ArrayList<>();
 
-        if(path != null) {
+        if (path != null) {
             String prevPath = null;
-            for(PointTransport p: path) {
-                String dir = p.getLineName() + " " + (p.getDirection().substring(0,1).equals("O")?"\u25B6":"\u25C0");
-                if(prevPath == null) {
+            for (PointTransport p : path) {
+                String dir = p.getLineName() + " " + (p.getDirection().substring(0, 1).equals("O") ? "\u25B6" : "\u25C0");
+                if (prevPath == null) {
                     prevPath = dir;
                     this.lineCodes.add(prevPath);
                     this.colorCodes.add(p.getColor());
@@ -58,13 +58,13 @@ public class RouteTransport {
         SpannableStringBuilder builder = new SpannableStringBuilder();
 
         int i = 0;
-        for(String line: this.lineCodes) {
+        for (String line : this.lineCodes) {
             SpannableString lineSpannable = new SpannableString(line);
             lineSpannable.setSpan(new ForegroundColorSpan(this.colorCodes.get(i)),
                     0, line.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-            lineSpannable.setSpan(new RelativeSizeSpan(0.7f), line.length()-1, line.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            lineSpannable.setSpan(new RelativeSizeSpan(0.7f), line.length() - 1, line.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 
-            if(i == 0)
+            if (i == 0)
                 builder.append(lineSpannable);
             else builder.append(" \u203A ").append(lineSpannable);
             i++;
@@ -95,25 +95,24 @@ public class RouteTransport {
     }
 
     public static Comparator<RouteTransport> getComparator(ComparatorType comparator) {
-        if(comparator == ComparatorType.PRICE) {
+        if (comparator == ComparatorType.PRICE) {
             return new java.util.Comparator<RouteTransport>() {
                 @Override
                 public int compare(RouteTransport o1, RouteTransport o2) {
                     if (o1.getTotalPrice() < o2.getTotalPrice()) return -1;
                     if (o1.getTotalPrice() == o2.getTotalPrice()) {
                         return Integer.compare(o1.getDistanceReadable(), o2.getDistanceReadable());
-                    }
-                    else return 1;
+                    } else return 1;
                 }
             };
         } else {
             return new java.util.Comparator<RouteTransport>() {
                 @Override
                 public int compare(RouteTransport o1, RouteTransport o2) {
-                    if(Math.abs(o1.getDistanceReadable() - o2.getDistanceReadable()) <= 100) { // less than 100 meters means equals distance
+                    if (Math.abs(o1.getDistanceReadable() - o2.getDistanceReadable()) <= 100) { // less than 100 meters means equals distance
                         return Double.compare(o1.getNumLines(), o2.getNumLines());
-                    }
-                    else return Double.compare(o1.getDistanceReadable(), o2.getDistanceReadable());
+                    } else
+                        return Double.compare(o1.getDistanceReadable(), o2.getDistanceReadable());
                 }
             };
         }

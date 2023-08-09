@@ -7,11 +7,10 @@
         android:orderInCategory="100"
         app:showAsAction="always"
         android:icon="@drawable/ic_call_split_white_24dp"
-        android:title="Recalculate"/>
+        android:title="Recalculate" />
     <item
         android:id="@+id/action_settings"
         android:icon="@drawable/ic_action_settings"
-        android:title="Settings">
-    </item>
+        android:title="Settings"></item>
 
 </menu>

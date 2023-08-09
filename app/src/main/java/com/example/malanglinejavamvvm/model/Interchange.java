@@ -1,7 +1,5 @@
 package com.example.malanglinejavamvvm.model;
 
-import com.google.android.gms.maps.model.LatLng;
-
 import java.util.HashSet;
 import java.util.Set;
 
@@ -17,7 +15,6 @@ public class Interchange {
         this.pointIds = new HashSet<>();
         this.points = new HashSet<>();
     }
-
 
 
 }

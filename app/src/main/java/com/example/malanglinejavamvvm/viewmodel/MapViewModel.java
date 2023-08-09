@@ -23,7 +23,6 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-
 import com.example.malanglinejavamvvm.R;
 import com.example.malanglinejavamvvm.model.DijkstraTask;
 import com.example.malanglinejavamvvm.model.DijkstraTransport;
@@ -50,7 +49,6 @@ import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -67,6 +65,7 @@ public class MapViewModel extends ViewModel {
     public void setLocation(LocationModel LocationModel) {
         location.setValue(LocationModel);
     }
+
     private MutableLiveData<List<Line>> lineList = new MutableLiveData<>();
 
     public LiveData<List<Line>> getLines() {
@@ -112,7 +111,6 @@ public class MapViewModel extends ViewModel {
 
         locationRequest = new LocationRequest();
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-        locationRequest.setInterval(5000);
 
         locationCallback = new LocationCallback() {
             @Override
@@ -130,7 +128,7 @@ public class MapViewModel extends ViewModel {
 
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions((Activity) context, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 0000);
+            ActivityCompat.requestPermissions((Activity) context, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 99);
             return;
         }
 
@@ -165,6 +163,7 @@ public class MapViewModel extends ViewModel {
             }
         });
     }
+
     public void calculateShortestPathBetweenMarkers(Context context, LatLng currentLocation, LatLng destination) {
         Log.d("MapViewModel", "calculateShortestPathBetweenMarkers called with currentLocation: " + currentLocation + ", destination: " + destination);
         if (graph != null) {
@@ -248,12 +247,13 @@ public class MapViewModel extends ViewModel {
                     DijkstraTransport.Priority.DISTANCE;
 
             DijkstraTask dijkstraTask = new DijkstraTask(graph, currentLocation, destination,
-                   priority,CDM.getDistance(context), dijkstraListener);
+                    priority, CDM.getDistance(context), dijkstraListener);
             dijkstraTask.execute();
         } else {
             Log.d("MapViewModel", "Graph is null");
         }
     }
+
     public void loadGraph() {
         // Obtain the lines and interchanges from the ViewModel
         List<Line> lines = getLines().getValue();
@@ -267,6 +267,7 @@ public class MapViewModel extends ViewModel {
             graphTask.execute();
         }
     }
+
     public void handleGraph(Set<PointTransport> points) {
         if (points != null && !points.isEmpty()) {
             // Graph is ready
@@ -317,8 +318,9 @@ public class MapViewModel extends ViewModel {
             polylines.add(googleMap.addPolyline(endWalkingPolylineOptions));
         }
     }
+
     public void handleRouteItemClick(RouteTransport routeTransport, GoogleMap googleMap,
-                                     List<Polyline> polylines, List<Marker> interchangeMarkers, Marker currentLocationMarker, Marker destinationMarker ) {
+                                     List<Polyline> polylines, List<Marker> interchangeMarkers, Marker currentLocationMarker, Marker destinationMarker) {
         if (googleMap == null || routeTransport == null) {
             return;
         }

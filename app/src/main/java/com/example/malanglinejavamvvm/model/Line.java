@@ -14,7 +14,8 @@ public class Line {
 
     public LinkedList<PointTransport> path = new LinkedList<>();
 
-    public Line() {}
+    public Line() {
+    }
 
     public Line(int id, String name, int color, String direction) {
         this.id = id;

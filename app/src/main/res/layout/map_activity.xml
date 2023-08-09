@@ -1,7 +1,9 @@
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools">
+
     <data>
+
         <variable
             name="viewModel"
             type="com.example.malanglinejavamvvm.viewmodel.MapViewModel" />
@@ -12,15 +14,13 @@
         android:layout_height="match_parent"
         android:layout_width="match_parent"
         android:id="@+id/outer_layout"
-        android:animateLayoutChanges="true"
-        >
+        android:animateLayoutChanges="true">
 
         <fragment
             android:id="@+id/map"
             android:name="com.google.android.gms.maps.SupportMapFragment"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            />
+            android:layout_height="match_parent" />
 
 
         <LinearLayout
@@ -44,15 +44,14 @@
                 android:id="@+id/card_selected_route"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                >
+                android:orientation="horizontal">
 
-<!--                <include layout="@layout/item_route_selected"-->
-<!--                    android:id="@+id/selected_route"-->
-<!--                    android:layout_width="0dp"-->
-<!--                    android:layout_weight="1"-->
-<!--                    android:layout_height="wrap_content"-->
-<!--                    />-->
+                <!--                <include layout="@layout/item_route_selected"-->
+                <!--                    android:id="@+id/selected_route"-->
+                <!--                    android:layout_width="0dp"-->
+                <!--                    android:layout_weight="1"-->
+                <!--                    android:layout_height="wrap_content"-->
+                <!--                    />-->
 
                 <View
                     android:layout_width="1dp"
@@ -61,8 +60,7 @@
                     android:layout_marginLeft="4dp"
                     android:layout_marginRight="8dp"
                     android:layout_marginTop="8dp"
-                    android:layout_marginBottom="8dp"
-                    />
+                    android:layout_marginBottom="8dp" />
 
                 <LinearLayout
                     android:layout_width="36dp"
@@ -70,8 +68,7 @@
                     android:paddingRight="4dp"
                     android:layout_gravity="center_vertical"
                     android:gravity="center"
-                    android:id="@+id/bt_show_route_detail"
-                    >
+                    android:id="@+id/bt_show_route_detail">
 
                     <ImageView
                         android:layout_width="wrap_content"
@@ -87,8 +84,7 @@
             <androidx.recyclerview.widget.RecyclerView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:id="@+id/route_detail"
-                >
+                android:id="@+id/route_detail">
 
             </androidx.recyclerview.widget.RecyclerView>
 

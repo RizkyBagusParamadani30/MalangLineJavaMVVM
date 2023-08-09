@@ -32,7 +32,8 @@ public class PointTransport extends Point {
     private Map<PointTransport, LinkedHashMap<PointTransport, TransportCost>> mSubChains
             = new HashMap<>();
 
-    public PointTransport() {}
+    public PointTransport() {
+    }
 
     //"l":"1","n":"AL","d":"O","s":"0","a":"1526","i":null},
     public PointTransport(String id,
@@ -54,23 +55,45 @@ public class PointTransport extends Point {
         this.lineName = lineName;
         this.direction = direction;
         this.color = color;
-        this.sequence= sequence;
+        this.sequence = sequence;
         this.adjacentPointId = adjacentPoints;
         this.adjacentPointInterchangeIds = interchanges;
         this.price = CDM.getStandardCost();
     }
 
-    public Double lat() { return this.lat; }
-    public Double lng() { return this.lng; }
-    public Boolean isStop() { return this.stop; }
-    public String getId() { return this.id; }
-    public int getIdLine() { return this.idLine; }
+    public Double lat() {
+        return this.lat;
+    }
+
+    public Double lng() {
+        return this.lng;
+    }
+
+    public Boolean isStop() {
+        return this.stop;
+    }
+
+    public String getId() {
+        return this.id;
+    }
+
+    public int getIdLine() {
+        return this.idLine;
+    }
+
     public int getColor() {
         return Color.parseColor(this.color);
     }
-    public String getLineName() { return this.lineName; }
-    public Double getPrice() { return this.price; }
-    public String getAdjacentPointId(){
+
+    public String getLineName() {
+        return this.lineName;
+    }
+
+    public Double getPrice() {
+        return this.price;
+    }
+
+    public String getAdjacentPointId() {
         return this.adjacentPointId;
     }
 
@@ -87,29 +110,49 @@ public class PointTransport extends Point {
     public void addDestination(PointTransport destination, TransportCost cost) {
         this.adjacentTransportPoints.put(destination, cost);
     }
+
     public void clearDestination() {
         this.adjacentTransportPoints.clear();
         this.adjacentTransportPoints = new HashMap<>();
     }
-    public Map<PointTransport, TransportCost> getAdjacentTransportPoints() { return this.adjacentTransportPoints; }
 
-    public void setCost(TransportCost transportCost) { this.transportCost = transportCost; }
-    public TransportCost getCost() { return this.transportCost; }
+    public Map<PointTransport, TransportCost> getAdjacentTransportPoints() {
+        return this.adjacentTransportPoints;
+    }
 
-    public List<PointTransport> getCheapestPath() { return this.cheapestPath; }
-    public List<PointTransport> getShortestPath() { return this.shortestPath; }
-    public void setCheapestPath(LinkedList<PointTransport> cheapestPath) { this.cheapestPath = cheapestPath; }
-    public void setShortestPath(LinkedList<PointTransport> shortestPath) { this.shortestPath = shortestPath; }
+    public void setCost(TransportCost transportCost) {
+        this.transportCost = transportCost;
+    }
+
+    public TransportCost getCost() {
+        return this.transportCost;
+    }
+
+    public List<PointTransport> getCheapestPath() {
+        return this.cheapestPath;
+    }
+
+    public List<PointTransport> getShortestPath() {
+        return this.shortestPath;
+    }
+
+    public void setCheapestPath(LinkedList<PointTransport> cheapestPath) {
+        this.cheapestPath = cheapestPath;
+    }
+
+    public void setShortestPath(LinkedList<PointTransport> shortestPath) {
+        this.shortestPath = shortestPath;
+    }
 
     public Double getCheapestPathCost() {
         Double cost = 0D;
         int currentLineId = 0;
-        for (PointTransport p: this.cheapestPath) {
-            if(cost == 0 && currentLineId == 0) {
+        for (PointTransport p : this.cheapestPath) {
+            if (cost == 0 && currentLineId == 0) {
                 cost += p.price;
                 currentLineId = p.getIdLine();
             }
-            if(currentLineId != p.getIdLine()) {
+            if (currentLineId != p.getIdLine()) {
                 currentLineId = p.getIdLine();
                 cost += p.price;
             }
@@ -125,13 +168,14 @@ public class PointTransport extends Point {
     public void setDistance(double distance) {
         this.transportCost.distance = distance;
     }
+
     public void setPrice(double price) {
         this.transportCost.price = price;
     }
 
     public String getDirection() {
-        if(this.direction != null && this.direction.equals("O")) return "Outbound";
-        if(this.direction != null && this.direction.equals("I")) return "Inbound";
+        if (this.direction != null && this.direction.equals("O")) return "Outbound";
+        if (this.direction != null && this.direction.equals("I")) return "Inbound";
         return direction;
     }
 
@@ -143,7 +187,8 @@ public class PointTransport extends Point {
         public Double price = Double.MAX_VALUE;
         public Double distance = Double.MAX_VALUE;
 
-        public TransportCost(){}
+        public TransportCost() {
+        }
 
         public TransportCost(Double price, Double distance) {
             this.price = price;
@@ -169,7 +214,9 @@ public class PointTransport extends Point {
         return (this.adjacentTransportPoints.size() == 1 && this.previousTransportPoints.size() == 1);
     }
 
-    public Map<PointTransport, TransportCost> getPreviousTransportPoints() { return this.previousTransportPoints; }
+    public Map<PointTransport, TransportCost> getPreviousTransportPoints() {
+        return this.previousTransportPoints;
+    }
 
     public void addSubChain(PointTransport next, LinkedHashMap<PointTransport, TransportCost> subChain) {
         this.mSubChains.put(next, subChain);
