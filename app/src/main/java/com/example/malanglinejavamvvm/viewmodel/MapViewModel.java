@@ -105,13 +105,14 @@ public class MapViewModel extends ViewModel {
         context = application.getApplicationContext();
     }
 
-
+    public void setManualLocation(Context context, double latitude, double longitude) {
+        LatLng latLng = new LatLng(-7.96089970678129, 112.65063788741827 );
+        setLocation(new LocationModel(latLng));
+    }
     public void startLocationUpdates(final Context context) {
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context);
-
         locationRequest = new LocationRequest();
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-
         locationCallback = new LocationCallback() {
             @Override
             public void onLocationResult(LocationResult locationResult) {
@@ -120,20 +121,23 @@ public class MapViewModel extends ViewModel {
                 }
                 Location loc = locationResult.getLastLocation();
                 if (loc != null) {
-                    LatLng latLng = new LatLng(loc.getLatitude(), loc.getLongitude());
-                    setLocation(new LocationModel(latLng));
+                    // Untukk Set Otomatis
+//                    LatLng latLng = new LatLng(loc.getLatitude(), loc.getLongitude());
+//                    setLocation(new LocationModel(latLng));
+
+                    //Untuk Set Manual
+                    setManualLocation(context, loc.getLatitude(), loc.getLongitude());
                 }
             }
         };
-
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions((Activity) context, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 99);
             return;
         }
-
         fusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, getMainLooper());
     }
+
 
     public void stopLocationUpdates() {
         if (fusedLocationProviderClient != null && locationCallback != null) {
@@ -186,7 +190,6 @@ public class MapViewModel extends ViewModel {
                 public void onDijkstraComplete(ArrayList<RouteTransport> routes) {
                     // Store the routes in the class-level variable
                     routesList = routes;
-                    Log.d("MapViewModel", "Dijkstra Complete with routes: " + routes.size());
                     // Print the routes received
                     for (RouteTransport route : routes) {
                         Log.d("MapViewModel", "Route: " + route);
@@ -198,28 +201,15 @@ public class MapViewModel extends ViewModel {
                         LatLng routeSourceLatLng = route.getSource().getLatLng();
                         LatLng routeDestinationLatLng = route.getDestination().getLatLng();
 
-                        Log.d("MapViewModel", "Route source: " + routeSourceLatLng);
-                        Log.d("MapViewModel", "Route destination: " + routeDestinationLatLng);
-                        Log.d("MapViewModel", "Current location: " + currentLocation);
-                        Log.d("MapViewModel", "Destination: " + destination);
-
                         if (Math.abs(routeSourceLatLng.latitude - currentLocation.latitude) < 100 &&
                                 Math.abs(routeSourceLatLng.longitude - currentLocation.longitude) < 100 &&
                                 Math.abs(routeDestinationLatLng.latitude - destination.latitude) < 100 &&
                                 Math.abs(routeDestinationLatLng.longitude - destination.longitude) < 100) {
-                            Log.d("MapViewModel", "Matching route found.");
 
                             List<PointTransport> path = route.getPath();
-                            Log.d("MapViewModel", "Path: " + path);
-
-                            Log.d("MapViewModel", "Source LatLng: " + route.getSource().getLatLng());
-                            Log.d("MapViewModel", "Destination LatLng: " + route.getDestination().getLatLng());
-
                             if (path != null && !path.isEmpty()) {
-                                Log.d("MapViewModel", "Path is not empty: " + path);
                                 routeList.postValue(routes);
                             } else {
-                                Log.d("MapViewModel", "Path is empty");
                             }
 
                             routeFound = true;

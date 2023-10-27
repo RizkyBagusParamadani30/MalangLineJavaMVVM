@@ -4,13 +4,16 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Trace;
 import android.preference.PreferenceManager;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.cardview.widget.CardView;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -39,120 +42,105 @@ import com.google.android.gms.maps.model.Polyline;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MapActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMapLongClickListener {
+public class MapActivity extends AppCompatActivity
+        implements OnMapReadyCallback, GoogleMap.OnMapLongClickListener {
+
     private GoogleMap googleMap;
     private MapViewModel viewModel;
     private Marker currentLocationMarker, destinationMarker;
     private RouteAdapter routeAdapter;
-    private RecyclerView recyclerView;
     private List<Marker> interchangeMarkers = new ArrayList<>();
     private List<Polyline> polylines = new ArrayList<>();
 
     private MapActivityBinding binding;
-
-
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
 
-        CDM.cost = Double.parseDouble(
-                PreferenceManager.getDefaultSharedPreferences(this)
-                        .getString("pref_cost", String.valueOf(CDM.cost)));
+        initViewModel();
+        initView();
+        initMap();
+    }
 
+    private void initViewModel() {
+        viewModel = new ViewModelProvider(this, new ViewModelFactory(getApplication())).get(MapViewModel.class);
+    }
+
+    private void initView() {
         binding = MapActivityBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-        recyclerView = binding.routeDetail;
+        RecyclerView recyclerView = binding.routeDetail;
         binding.cardContainer.setVisibility(View.GONE);
 
-        // Inisialisasi viewModel
-        viewModel = new ViewModelProvider(this, new ViewModelFactory(getApplication())).get(MapViewModel.class);
-        binding.setViewModel(viewModel); // mengatur View model untuk data binding
+        binding.setViewModel(viewModel);
         binding.setLifecycleOwner(this);
 
-        viewModel.getLocation().observe(this, new Observer<LocationModel>() {
-            @Override
-            public void onChanged(LocationModel locationModel) {
-                updateCurrentLocationMarker(locationModel.getLatLng());
-                moveCameraToLocation(locationModel.getLatLng());
-            }
-        });
-        // mengatur recyclerview dengan data binding
-        routeAdapter = new RouteAdapter(new ArrayList<>(), routeTransport -> {
-            viewModel.handleRouteItemClick(routeTransport, googleMap, polylines, interchangeMarkers, currentLocationMarker, destinationMarker);
-            binding.cardContainer.setVisibility(View.GONE);
-        });
+        routeAdapter = new RouteAdapter(new ArrayList<>(), this::handleRouteItemClick);
         binding.routeDetail.setAdapter(routeAdapter);
         binding.routeDetail.setLayoutManager(new LinearLayoutManager(this));
 
+        viewModel.getLocation().observe(this, this::updateCurrentLocationAndCamera);
 
-        viewModel.getRoutes().observe(this, new Observer<List<RouteTransport>>() {
-            @Override
-            public void onChanged(List<RouteTransport> routes) {
-                // update rute yang ada di adapter
-                routeAdapter.setRoutes((ArrayList<RouteTransport>) routes);
-            }
-        });
-
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
-        assert mapFragment != null;
-        mapFragment.getMapAsync(this);
+        viewModel.getRoutes().observe(this, routes -> routeAdapter.setRoutes(new ArrayList<>(routes)));
     }
 
+    private void initMap() {
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+        if (mapFragment != null) {
+            mapFragment.getMapAsync(this);
+        }
+    }
+
+    private void updateCurrentLocationAndCamera(LocationModel locationModel) {
+        updateCurrentLocationMarker(locationModel.getLatLng());
+        moveCameraToLocation(locationModel.getLatLng());
+    }
+
+    private void handleRouteItemClick(RouteTransport routeTransport) {
+        viewModel.handleRouteItemClick(routeTransport, googleMap, polylines, interchangeMarkers, currentLocationMarker, destinationMarker);
+        binding.cardContainer.setVisibility(View.GONE);
+    }
+
+    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        this.getMenuInflater().inflate(R.menu.action_menu, menu);
+        getMenuInflater().inflate(R.menu.action_menu, menu);
         return true;
     }
 
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         Intent i = new Intent(this, SettingsActivity.class);
-        this.startActivity(i);
+        startActivity(i);
         return true;
     }
 
     @Override
     public void onMapReady(GoogleMap map) {
+        long waktuMulai = System.currentTimeMillis();
         googleMap = map;
-
-        // Start location updates
         viewModel.startLocationUpdates(this);
-
-        // Set the map long click listener
+        long waktuSelesai = System.currentTimeMillis();
+        long waktu = waktuSelesai - waktuMulai;
+        Log.d("Time", "waktu: " + waktu + " milliseconds");
+        Toast.makeText(this, waktu +" milliseconds", Toast.LENGTH_SHORT).show();
         googleMap.setOnMapLongClickListener(this);
 
-        // Parse the JSON data and update the ViewModel
         viewModel.AmbilPoints(getApplicationContext(), googleMap);
 
-//        // Observe the lines and interchanges data in the ViewModel
-//        viewModel.getLines().observe(this, new Observer<List<Line>>() {
-//            @Override
-//            public void onChanged(List<Line> lines) {
-//                // Check if both lines and interchanges data is available
-//                if (lines != null && viewModel.getInterchanges().getValue() != null) {
-//                    viewModel.loadGraph();
-//                }
-//            }
-//        });
+        viewModel.getInterchanges().observe(this, interchanges -> {
+            if (viewModel.getLines().getValue() != null && interchanges != null) {
+                viewModel.loadGraph();
+            }
+        });
 
-        viewModel.getInterchanges().observe(this, new Observer<List<Interchange>>() {
-            @Override
-            public void onChanged(List<Interchange> interchanges) {
-                // Check if both lines and interchanges data is available
-                if (viewModel.getLines().getValue() != null && interchanges != null) {
-                    viewModel.loadGraph();
-                }
+        googleMap.setOnInfoWindowClickListener(marker -> {
+            if (marker.equals(destinationMarker)) {
+                binding.cardContainer.setVisibility(View.VISIBLE);
             }
         });
-        googleMap.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
-            @Override
-            public void onInfoWindowClick(Marker marker) {
-                if (marker.equals(destinationMarker)) {
-                    binding.cardContainer.setVisibility(View.VISIBLE);
-                }
-            }
-        });
+
 
     }
 
@@ -170,14 +158,15 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private void moveCameraToLocation(LatLng latLng) {
         CameraPosition cameraPosition = new CameraPosition.Builder()
                 .target(latLng)
-                .zoom(13f)
+                .zoom(11f)
                 .build();
         googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
     }
 
+    @Override
     public void onMapLongClick(LatLng latilongi) {
-        LinearLayout cardContainer = binding.cardContainer;
-        cardContainer.setVisibility(View.VISIBLE);
+        CardView cardContainer = binding.cardContainer;
+//        cardContainer.setVisibility(View.VISIBLE);
 
         for (Polyline polyline : polylines) {
             polyline.remove();
@@ -193,18 +182,20 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             destinationMarker.remove();
             destinationMarker = null;
         }
+
+        // Set the destination coordinates here
+        LatLng destinationCoordinates = new LatLng(-7.971795618780245, 112.60223139077425);
         this.destinationMarker = MapUtilities.drawMarker(
-                this.googleMap, latilongi, BitmapDescriptorFactory.HUE_GREEN, "Destination", "Tap to show route\nto this location");
+                this.googleMap, destinationCoordinates, BitmapDescriptorFactory.HUE_GREEN, "Destination", "Tap to show route\nto this location");
 
         LatLng currentLocation = currentLocationMarker.getPosition();
         LatLng destination = destinationMarker.getPosition();
-        viewModel.calculateShortestPathBetweenMarkers(MapActivity.this, currentLocation, destination);
+        viewModel.calculateShortestPathBetweenMarkers(this, currentLocation, destination);
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        // Stop location updates
         viewModel.stopLocationUpdates();
     }
 }
